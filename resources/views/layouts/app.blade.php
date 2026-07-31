@@ -232,7 +232,11 @@ td.ops{white-space:nowrap;}
       <span class="scope-label">国家</span>
       <div class="scope-tabs">
         @foreach($countries as $country)
-          <a href="{{ route('project.show', $country->projects->first()) }}" class="scope-tab {{ isset($project) && $project->country_id === $country->id ? 'active' : '' }}">{{ $country->name }}</a>
+          @if($country->projects->isNotEmpty())
+            <a href="{{ route('project.show', $country->projects->first()) }}" class="scope-tab {{ isset($project) && $project->country_id === $country->id ? 'active' : '' }}">{{ $country->name }}</a>
+          @else
+            <span class="scope-tab" style="opacity:.5;cursor:default;" title="这个国家下还没有项目">{{ $country->name }}</span>
+          @endif
         @endforeach
       </div>
     </div>

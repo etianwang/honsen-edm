@@ -10,6 +10,7 @@
         <p class="page-sub" style="margin:0;">团队 / 专业为全公司统一标准</p>
       </div>
       <div style="display:flex;gap:8px;">
+        <a href="{{ route('admin.projects.index') }}" class="btn">国家/项目管理</a>
         <a href="{{ route('admin.users.index') }}" class="btn">账号管理</a>
         <button type="button" class="btn btn-accent" onclick="document.getElementById('add-team-modal').style.display='flex'">+ 添加团队</button>
       </div>

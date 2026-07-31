@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\CountryController;
+use App\Http\Controllers\Admin\ProjectController as AdminProjectController;
 use App\Http\Controllers\Admin\SpecialtyController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\UserController;
@@ -75,5 +77,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+
+        Route::get('/projects', [AdminProjectController::class, 'index'])->name('projects.index');
+        Route::post('/countries', [CountryController::class, 'store'])->name('countries.store');
+        Route::patch('/countries/{country}', [CountryController::class, 'update'])->name('countries.update');
+        Route::delete('/countries/{country}', [CountryController::class, 'destroy'])->name('countries.destroy');
+
+        Route::post('/countries/{country}/projects', [AdminProjectController::class, 'store'])->name('projects.store');
+        Route::patch('/projects/{project}', [AdminProjectController::class, 'update'])->name('projects.update');
+        Route::delete('/projects/{project}', [AdminProjectController::class, 'destroy'])->name('projects.destroy');
     });
 });

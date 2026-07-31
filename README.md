@@ -49,7 +49,70 @@ php artisan test   # 用内存 SQLite，不需要额外配置
 
 ---
 
-## 生产环境部署（Ubuntu + 宝塔面板）
+## 生产环境部署（Docker，推荐）
+
+裸机在 Ubuntu 上装 PHP/Composer/扩展/ODA File Converter 步骤繁琐、容易环境不一致，项目提供了 `Dockerfile` + `docker-compose.yml` 把应用本身（PHP-FPM + Nginx + 队列 worker）打包成镜像。**PostgreSQL 仍然沿用宿主机上已经装好的（比如宝塔管理的那个），不放进容器**，架构更简单、也不用额外操心数据卷备份数据库。
+
+### 1. 服务器上装 Docker
+
+```bash
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER   # 加完组需要重新登录一次 shell 才生效
+```
+
+### 2. （可选）放好 ODA File Converter
+
+DWG→DXF 转换需要 ODA File Converter，官网需要人工注册下载，不能在构建时自动拉取。按 [docker/oda/README.md](docker/oda/README.md) 把下载好的 `.deb` 放进 `docker/oda/` 目录再构建；不放的话镜像照样能建，只是 DWG 交互式预览会被跳过。
+
+### 3. 配置 `.env`
+
+```bash
+cp .env.example .env
+php artisan key:generate --show   # 在本地或任意装了 PHP 的机器上生成一把 key，粘贴进 .env 的 APP_KEY=
+```
+
+和裸机部署（见下一节第 6 步）配置基本一致，但两处 Docker 特有的地方：
+
+```ini
+# 容器要连宿主机上的 PostgreSQL，用这个特殊域名（docker-compose.yml 里已经配置了对应的 extra_hosts）
+DB_HOST=host.docker.internal
+
+# 确认宿主机 PostgreSQL 监听的不只是 127.0.0.1，否则容器连不进来，
+# 比如 postgresql.conf 里 listen_addresses = '*'，并在 pg_hba.conf 里放行 Docker 的网段（一般是 172.16.0.0/12）
+```
+
+### 4. 构建 + 启动
+
+```bash
+docker compose build
+docker compose up -d
+docker compose exec app php artisan migrate --force
+docker compose exec app php artisan app:create-admin
+```
+
+`app` 容器监听宿主机 `8080` 端口（`docker-compose.yml` 里可改），`worker` 容器跑 `php artisan queue:work` 处理站内通知等队列任务。
+
+### 5. 宝塔面板：反向代理 + HTTPS
+
+不需要给这个站点选 PHP 版本或伪静态规则了（都在容器里），只需要：网站 → 添加站点 → **反向代理**，目标 URL 填 `http://127.0.0.1:8080`；SSL 证书照常在宝塔面板申请、开启强制 HTTPS。
+
+### 6. 后续更新代码怎么发布
+
+```bash
+cd /www/wwwroot/honsen-drawing
+git pull
+docker compose build
+docker compose up -d
+docker compose exec app php artisan migrate --force
+```
+
+### 7. 上线前确认
+
+和下面裸机部署第 12 步的检查表一样（`.env` 三项、没跑过 `db:seed`、HTTPS、COS 配置、ODA 转换器、`storage/` 权限），但 `storage/` 权限已经在镜像构建时处理好，不需要手动 `chown`。
+
+---
+
+## 生产环境部署（Ubuntu + 宝塔面板，裸机方式）
 
 以下步骤假设：Ubuntu 22.04/24.04，已经装好宝塔面板（[bt.cn](https://www.bt.cn)），PHP 通过宝塔的多版本 PHP 管理器安装，PostgreSQL 走系统 `apt`（宝塔社区版对 PostgreSQL 的支持不如 MySQL 完善，直接用官方仓库更省心，宝塔面板照样能管理这台服务器上的站点/证书/防火墙）。
 

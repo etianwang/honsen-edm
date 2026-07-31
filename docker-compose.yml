@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        WITH_ODA: "true"
+    image: honsen-drawing:latest
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8080:80"
+    volumes:
+      - storage-data:/var/www/html/storage/app
+      - storage-logs:/var/www/html/storage/logs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["web"]
+
+  worker:
+    image: honsen-drawing:latest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - storage-data:/var/www/html/storage/app
+      - storage-logs:/var/www/html/storage/logs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["worker"]
+    depends_on:
+      - app
+
+volumes:
+  storage-data:
+  storage-logs:
