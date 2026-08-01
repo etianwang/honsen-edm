@@ -188,7 +188,7 @@ php artisan key:generate
 编辑 `.env`，重点确认这几项（生产环境和本地开发不一样的地方）：
 
 ```ini
-APP_NAME="图纸变更管理系统"
+APP_NAME="深圳弘盛图纸管理系统"
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://你的域名

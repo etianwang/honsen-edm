@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>登录 · 图纸变更管理系统</title>
+<title>登录 · 深圳弘盛图纸管理系统</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -41,7 +41,7 @@
         <circle cx="13" cy="10" r="1.4" fill="#3A2A18"/>
       </svg>
       <div>
-        <div class="name">图纸变更管理系统</div>
+        <div class="name">深圳弘盛图纸管理系统</div>
         <div class="sub">Honsen Africa · 工程图纸协同平台</div>
       </div>
     </div>

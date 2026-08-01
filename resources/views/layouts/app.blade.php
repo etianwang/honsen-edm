@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>@yield('title', '图纸变更管理系统')</title>
+<title>@yield('title', '深圳弘盛图纸管理系统')</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
@@ -283,7 +283,7 @@ td.ops{white-space:nowrap;}
       <circle cx="13" cy="10" r="1.4" fill="#F1EADB"/>
     </svg>
     <div class="brand-text">
-      <div class="name">图纸变更管理系统</div>
+      <div class="name">深圳弘盛图纸管理系统</div>
       <div class="sub">Honsen Africa @isset($project) &middot; {{ $project->name }} @endisset</div>
     </div>
   </div>
