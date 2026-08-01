@@ -69,10 +69,10 @@ a{color:inherit;}
 
 .shell{display:flex;min-height:calc(100vh - 56px);}
 
-.app-footer{padding:16px 20px;text-align:center;font-size:11.5px;color:var(--muted);border-top:1px solid var(--border);background:var(--paper);}
-.app-footer a{color:var(--muted);text-decoration:none;}
-.app-footer a:hover{color:var(--accent);}
-.app-footer .footer-sep{margin:0 6px;}
+.page-footer{margin-top:32px;padding-top:14px;text-align:left;font-size:11px;color:var(--muted);border-top:1px solid var(--border);}
+.page-footer a{color:var(--muted);text-decoration:none;}
+.page-footer a:hover{color:var(--accent);}
+.page-footer .footer-sep{margin:0 6px;}
 
 /* 侧边栏：胡桃木饰面墙板质感（真实木纹照片 + 竖向板缝 + 顶部/底部暗角，替代纯色底） */
 .sidebar{
@@ -358,12 +358,6 @@ td.ops{white-space:nowrap;}
 </div>
 
 @yield('content')
-
-<footer class="app-footer">
-  <span>Honsen Africa &middot; {{ __('深圳弘盛图纸管理系统') }}</span>
-  <span class="footer-sep">&middot;</span>
-  <a href="https://github.com/etianwang" target="_blank" rel="noopener noreferrer">Design by Etienne</a>
-</footer>
 
 @if(session('toast'))
 <div class="toast" x-data="{show:true}" x-show="show" x-init="setTimeout(() => show=false, 2600)">{{ session('toast') }}</div>

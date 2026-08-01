@@ -56,6 +56,8 @@
       @empty
         <div class="empty-state"><p>{{ __('该专业暂无变更记录') }}</p></div>
       @endforelse
+
+      @include('partials.footer')
     </div>
   </div>
 </div>

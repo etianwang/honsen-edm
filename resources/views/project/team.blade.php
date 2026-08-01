@@ -64,6 +64,8 @@
       @empty
         <div class="empty-state"><p>{{ __('该团队暂无变更记录') }}</p></div>
       @endforelse
+
+      @include('partials.footer')
     </div>
   </div>
 </div>

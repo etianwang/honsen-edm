@@ -38,6 +38,8 @@
       </div>
       <button type="submit" class="btn btn-accent" style="width:100%;justify-content:center;margin-top:8px;">{{ __('保存') }}</button>
     </form>
+
+    @include('partials.footer')
   </div>
 </div>
 @endsection

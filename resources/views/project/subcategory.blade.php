@@ -134,6 +134,8 @@
           </table>
         @endif
       @endif
+
+      @include('partials.footer')
     </div>
   </div>
 </div>
