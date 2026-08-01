@@ -67,7 +67,7 @@ a{color:inherit;}
 .user-chip .u-name{font-size:12.5px;color:var(--navy-text);}
 .user-chip .u-role{font-size:10.5px;color:var(--navy-text-dim);}
 
-.shell{display:flex;}
+.shell{display:flex;align-items:flex-start;}
 
 .page-footer{margin-top:32px;padding-top:14px;text-align:left;font-size:11px;color:var(--muted);border-top:1px solid var(--border);}
 .page-footer a{color:var(--muted);text-decoration:none;}
@@ -76,7 +76,7 @@ a{color:inherit;}
 
 /* 侧边栏：胡桃木饰面墙板质感（真实木纹照片 + 竖向板缝 + 顶部/底部暗角，替代纯色底） */
 .sidebar{
-  width:272px;flex:none;padding:14px 0 24px;overflow-y:auto;
+  width:272px;flex:none;padding:14px 0 24px;overflow-y:auto;min-height:calc(100vh - 56px);
   color:var(--navy-text);
   background-color:#4a3520;
   background-image:
