@@ -39,7 +39,7 @@ class SubcategoryController extends Controller
 
         $tree = ProjectTree::build($project, $user);
 
-        $subcategory->load(['specialty.team', 'versions.files', 'versions.uploader']);
+        $subcategory->load(['specialty.team', 'versions.files', 'versions.drawings', 'versions.uploader']);
 
         return view('project.subcategory', [
             'countries' => $countries,

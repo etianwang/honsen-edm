@@ -9,7 +9,9 @@ return [
     // 单位：KB，对应 Laravel 验证规则里的 max
     'dwg_max_kb' => env('UPLOAD_DWG_MAX_KB', 200 * 1024),
     'doc_max_kb' => env('UPLOAD_DOC_MAX_KB', 20 * 1024),
+    'pdf_max_kb' => env('UPLOAD_PDF_MAX_KB', 50 * 1024),
 
     'dwg_extensions' => ['dwg', 'dxf'],
-    'doc_extensions' => ['doc', 'docx', 'xls', 'xlsx', 'pdf'],
+    'doc_extensions' => ['doc', 'docx', 'xls', 'xlsx', 'pdf', 'txt', 'dwg'],
+    'pdf_extensions' => ['pdf'],
 ];

@@ -40,7 +40,7 @@
             <div class="feed-date">{{ $version->publish_date->format('Y-m-d') }}</div>
             <div class="lang-badges feed-langs">
               @foreach(['fr','en'] as $lang)
-                @php($present = $version->files->firstWhere('language', $lang))
+                @php($present = $version->availableLanguages()->contains($lang))
                 <span class="lang-pill {{ $present ? 'present' : 'missing' }}" style="font-size:9.5px;padding:1px 5px;">{{ strtoupper($lang) }}</span>
               @endforeach
             </div>

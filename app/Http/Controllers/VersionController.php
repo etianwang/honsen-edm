@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ConvertVersionFileDxf;
+use App\Jobs\ConvertVersionDrawingDxf;
 use App\Models\AuditLog;
 use App\Models\Subcategory;
 use App\Models\User;
 use App\Models\Version;
+use App\Models\VersionDrawing;
 use App\Models\VersionFile;
 use App\Notifications\NewVersionPublished;
 use App\Services\CosFileService;
@@ -25,19 +26,26 @@ class VersionController extends Controller
         $this->authorize('create', [Version::class, $subcategory]);
 
         $dwgRule = ['file', 'mimes:'.implode(',', config('uploads.dwg_extensions')), 'max:'.config('uploads.dwg_max_kb')];
+        $pdfRule = ['file', 'mimes:'.implode(',', config('uploads.pdf_extensions')), 'max:'.config('uploads.pdf_max_kb')];
         $docRule = ['file', 'mimes:'.implode(',', config('uploads.doc_extensions')), 'max:'.config('uploads.doc_max_kb')];
 
-        $data = $request->validate([
+        $rules = [
             'version_no' => ['required', 'string', 'max:20'],
             'publish_date' => ['required', 'date'],
             'description' => ['required', 'string'],
-            'zh_dwg' => array_merge(['required'], $dwgRule),
-            'zh_doc' => array_merge(['required'], $docRule),
-            'fr_dwg' => array_merge(['nullable'], $dwgRule),
-            'fr_doc' => array_merge(['nullable'], $docRule),
-            'en_dwg' => array_merge(['nullable'], $dwgRule),
-            'en_doc' => array_merge(['nullable'], $docRule),
-        ]);
+            // 唯一的强制项：中文至少要有 1 份 DWG；其余语言、PDF、说明文件全部可选，可以随时后补
+            'zh_dwg' => ['required', 'array', 'min:1'],
+        ];
+
+        foreach (['zh', 'fr', 'en'] as $lang) {
+            $rules["{$lang}_dwg"] = $rules["{$lang}_dwg"] ?? ['nullable', 'array'];
+            $rules["{$lang}_dwg.*"] = $dwgRule;
+            $rules["{$lang}_pdf"] = ['nullable', 'array'];
+            $rules["{$lang}_pdf.*"] = $pdfRule;
+            $rules["{$lang}_doc"] = array_merge(['nullable'], $docRule);
+        }
+
+        $data = $request->validate($rules);
 
         $pendingDxfConversions = [];
 
@@ -53,29 +61,24 @@ class VersionController extends Controller
             $dir = "projects/{$subcategory->project_id}/subcategories/{$subcategory->id}/versions/{$version->id}";
 
             foreach (['zh', 'fr', 'en'] as $lang) {
-                $dwg = $request->file("{$lang}_dwg");
-                $doc = $request->file("{$lang}_doc");
-
-                if (! $dwg && ! $doc) {
-                    continue;
+                foreach ($request->file("{$lang}_dwg", []) as $dwg) {
+                    $drawing = $this->storeDrawing($dwg, $dir, $lang, VersionDrawing::KIND_DWG, $version->id);
+                    $pendingDxfConversions[] = $drawing->id;
                 }
 
-                $dwgResult = $dwg ? $this->files->store($dwg, "{$dir}/{$lang}") : null;
-                $docResult = $doc ? $this->files->store($doc, "{$dir}/{$lang}") : null;
+                foreach ($request->file("{$lang}_pdf", []) as $pdf) {
+                    $this->storeDrawing($pdf, $dir, $lang, VersionDrawing::KIND_PDF, $version->id);
+                }
 
-                $versionFile = VersionFile::create([
-                    'version_id' => $version->id,
-                    'language' => $lang,
-                    'dwg_path' => $dwgResult['path'] ?? null,
-                    'dwg_size' => $dwgResult['size'] ?? null,
-                    'dxf_status' => $dwg ? VersionFile::DXF_PENDING : null,
-                    'doc_path' => $docResult['path'] ?? null,
-                    'doc_size' => $docResult['size'] ?? null,
-                    'uploaded_by' => Auth::id(),
-                ]);
-
-                if ($dwg) {
-                    $pendingDxfConversions[] = $versionFile->id;
+                if ($doc = $request->file("{$lang}_doc")) {
+                    $docResult = $this->files->store($doc, "{$dir}/{$lang}");
+                    VersionFile::create([
+                        'version_id' => $version->id,
+                        'language' => $lang,
+                        'doc_path' => $docResult['path'],
+                        'doc_size' => $docResult['size'],
+                        'uploaded_by' => Auth::id(),
+                    ]);
                 }
             }
 
@@ -84,8 +87,8 @@ class VersionController extends Controller
 
         // DWG→DXF 转换放到后台异步跑（单个文件最多可能耗时 60 秒），变更记录本身立即可见，
         // 交互式预览转换完之前前端显示"转换中"，不阻塞发布流程
-        foreach ($pendingDxfConversions as $versionFileId) {
-            ConvertVersionFileDxf::dispatch($versionFileId);
+        foreach ($pendingDxfConversions as $versionDrawingId) {
+            ConvertVersionDrawingDxf::dispatch($versionDrawingId);
         }
 
         AuditLog::record(Auth::id(), 'create', 'version', $version->id, "上传变更「{$subcategory->name} · {$version->version_no}」");
@@ -95,6 +98,22 @@ class VersionController extends Controller
         return redirect()
             ->route('subcategory.show', [$subcategory->project_id, $subcategory])
             ->with('toast', '变更已发布');
+    }
+
+    private function storeDrawing(\Illuminate\Http\UploadedFile $file, string $dir, string $lang, string $kind, int $versionId): VersionDrawing
+    {
+        $result = $this->files->store($file, "{$dir}/{$lang}/{$kind}");
+
+        return VersionDrawing::create([
+            'version_id' => $versionId,
+            'language' => $lang,
+            'kind' => $kind,
+            'file_path' => $result['path'],
+            'file_size' => $result['size'],
+            'original_name' => $result['original_name'],
+            'dxf_status' => $kind === VersionDrawing::KIND_DWG ? VersionDrawing::DXF_PENDING : null,
+            'uploaded_by' => Auth::id(),
+        ]);
     }
 
     /**

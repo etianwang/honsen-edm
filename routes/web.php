@@ -13,6 +13,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\VersionController;
+use App\Http\Controllers\VersionDrawingController;
 use App\Http\Controllers\VersionFileController;
 use Illuminate\Support\Facades\Route;
 
@@ -53,14 +54,23 @@ Route::middleware('auth')->group(function () {
                 ->name('version-file.store');
             Route::delete('/versions/{version}/files/{language}', [VersionFileController::class, 'destroy'])
                 ->name('version-file.destroy');
+
+            Route::post('/versions/{version}/drawings/{language}/{kind}', [VersionDrawingController::class, 'store'])
+                ->whereIn('kind', ['dwg', 'pdf'])
+                ->name('version-drawing.store');
+            Route::delete('/version-drawings/{drawing}', [VersionDrawingController::class, 'destroy'])
+                ->name('version-drawing.destroy');
         });
 
-        Route::get('/versions/{version}/files/{language}/{kind}/download', [VersionFileController::class, 'download'])
-            ->whereIn('kind', ['dwg', 'doc'])
+        Route::get('/versions/{version}/files/{language}/download', [VersionFileController::class, 'download'])
             ->name('version-file.download');
 
-        Route::get('/versions/{version}/files/{language}/dxf', [VersionFileController::class, 'dxf'])
-            ->name('version-file.dxf');
+        Route::get('/version-drawings/{drawing}/download', [VersionDrawingController::class, 'download'])
+            ->name('version-drawing.download');
+        Route::get('/version-drawings/{drawing}/dxf', [VersionDrawingController::class, 'dxf'])
+            ->name('version-drawing.dxf');
+        Route::get('/versions/{version}/languages/{language}/zip', [VersionDrawingController::class, 'downloadZip'])
+            ->name('version.language-zip');
     });
 
     Route::middleware('role:admin,super_admin')->prefix('admin')->name('admin.')->group(function () {

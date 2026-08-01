@@ -44,14 +44,17 @@ class ProjectController extends Controller
                 ->whereMonth('publish_date', now()->month)
                 ->count(),
             'external' => $scopeByTeam(Version::query()->whereHas('subcategory', fn ($q) => $q->where('project_id', $project->id)))
-                ->whereHas('files', fn ($q) => $q->whereIn('language', ['fr', 'en']))
+                ->where(function ($q) {
+                    $q->whereHas('files', fn ($q2) => $q2->whereIn('language', ['fr', 'en'])->whereNotNull('doc_path'))
+                        ->orWhereHas('drawings', fn ($q2) => $q2->whereIn('language', ['fr', 'en']));
+                })
                 ->count(),
         ];
 
         $feed = $scopeByTeam(
             Version::query()->whereHas('subcategory', fn ($q) => $q->where('project_id', $project->id))
         )
-            ->with(['subcategory.specialty.team', 'files'])
+            ->with(['subcategory.specialty.team', 'files', 'drawings'])
             ->orderByDesc('publish_date')
             ->orderByDesc('id')
             ->limit(50)

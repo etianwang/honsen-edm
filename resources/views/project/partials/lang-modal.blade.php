@@ -1,50 +1,111 @@
 @php
-  $existing = $version->fileFor($lang);
-  $isReplace = (bool) $existing;
+  $dwgList = $version->drawingsFor($lang, \App\Models\VersionDrawing::KIND_DWG);
+  $pdfList = $version->drawingsFor($lang, \App\Models\VersionDrawing::KIND_PDF);
+  $docFile = $version->fileFor($lang);
+  $formatSize = fn ($bytes) => $bytes ? ($bytes >= 1048576 ? round($bytes / 1048576, 1).'MB' : round($bytes / 1024).'KB') : '—';
 @endphp
 <div id="lang-modal-{{ $version->id }}-{{ $lang }}" class="overlay" style="display:none;">
-  <div class="modal">
+  <div class="modal wide">
     <div class="modal-head">
-      <h3>{{ $isReplace ? '替换' : '补充' }}{{ $langLabel[$lang] }}版本 · {{ $version->version_no }}</h3>
+      <h3>{{ $langLabel[$lang] }}版本文件 · {{ $version->version_no }}</h3>
       <button type="button" class="modal-close" onclick="document.getElementById('lang-modal-{{ $version->id }}-{{ $lang }}').style.display='none'">&times;</button>
     </div>
-    <form method="POST" action="{{ route('version-file.store', [$version, $lang]) }}" enctype="multipart/form-data" class="async-upload-form" data-upload-label="{{ $isReplace ? '替换' : '补充' }}{{ $langLabel[$lang] }} · {{ $version->version_no }}">
-      @csrf
-      <div class="modal-body">
-        <p class="hint" style="margin:0 0 14px;">
-          @if($isReplace)
-            重新上传该版本的{{ $langLabel[$lang] }}文件，新文件会覆盖当前版本。只选择要更换的文件即可，未选择的保持不变。
-          @else
-            为该版本补充{{ $langLabel[$lang] }}图纸，用于图纸外发。
-          @endif
-        </p>
-        <div class="field">
-          <label>图纸文件（DWG）</label>
-          <input type="file" name="dwg" accept=".dwg,.dxf">
-          @if($isReplace && $existing->dwg_path)<p class="hint">当前：{{ basename($existing->dwg_path) }}</p>@endif
+    <div class="modal-body">
+      @if($dwgList->isNotEmpty() || $pdfList->isNotEmpty() || $docFile?->doc_path)
+        <a class="file-chip" style="margin-bottom:14px;" href="{{ route('version.language-zip', [$version, $lang]) }}">📦 打包下载本语言全部文件（ZIP）</a>
+      @endif
+
+      <div class="lang-section-head">DWG 原图（{{ $dwgList->count() }} 份）</div>
+      @forelse($dwgList as $drawing)
+        <div class="spec-admin-row" style="padding:8px 0;">
+          <div class="spec-admin-head" style="margin-bottom:0;">
+            <span class="sa-name" style="flex:none;font-family:var(--font-mono);font-size:12.5px;">{{ $drawing->original_name ?: basename($drawing->file_path) }}</span>
+            <span style="font-size:11px;color:var(--muted);">{{ $formatSize($drawing->file_size) }} · {{ $drawing->created_at->format('Y-m-d') }} 上传</span>
+            <div class="spacer"></div>
+            <a class="icon-btn" style="width:26px;height:26px;" title="下载" href="{{ route('version-drawing.download', $drawing) }}">↓</a>
+            @if($user->canManageContent())
+              <form method="POST" action="{{ route('version-drawing.destroy', $drawing) }}" onsubmit="return confirm('确定删除「{{ $drawing->original_name ?: basename($drawing->file_path) }}」？')">
+                @csrf @method('DELETE')
+                <button type="submit" class="icon-btn danger" style="width:26px;height:26px;" title="删除">✕</button>
+              </form>
+            @endif
+          </div>
         </div>
-        <div class="field">
-          <label>变更说明文件</label>
-          <input type="file" name="doc" accept=".doc,.docx,.xls,.xlsx,.pdf">
-          @if($isReplace && $existing->doc_path)<p class="hint">当前：{{ basename($existing->doc_path) }}</p>@endif
+      @empty
+        <p class="hint" style="margin:0 0 10px;">暂无 DWG 文件</p>
+      @endforelse
+
+      @if($user->canManageContent())
+        <form method="POST" action="{{ route('version-drawing.store', [$version, $lang, 'dwg']) }}" enctype="multipart/form-data" class="async-upload-form" data-upload-label="追加{{ $langLabel[$lang] }} DWG · {{ $version->version_no }}" style="margin:8px 0 18px;">
+          @csrf
+          <div class="field-row">
+            <div class="field" style="margin-bottom:0;flex:1;"><input type="file" name="files[]" accept=".dwg,.dxf" multiple></div>
+            <button type="submit" class="btn btn-sm">追加 DWG</button>
+          </div>
+        </form>
+      @endif
+
+      <div class="lang-section-head">PDF 图纸（{{ $pdfList->count() }} 份）</div>
+      @forelse($pdfList as $drawing)
+        <div class="spec-admin-row" style="padding:8px 0;">
+          <div class="spec-admin-head" style="margin-bottom:0;">
+            <span class="sa-name" style="flex:none;font-family:var(--font-mono);font-size:12.5px;">{{ $drawing->original_name ?: basename($drawing->file_path) }}</span>
+            <span style="font-size:11px;color:var(--muted);">{{ $formatSize($drawing->file_size) }} · {{ $drawing->created_at->format('Y-m-d') }} 上传</span>
+            <div class="spacer"></div>
+            <a class="icon-btn" style="width:26px;height:26px;" title="下载" href="{{ route('version-drawing.download', $drawing) }}">↓</a>
+            @if($user->canManageContent())
+              <form method="POST" action="{{ route('version-drawing.destroy', $drawing) }}" onsubmit="return confirm('确定删除「{{ $drawing->original_name ?: basename($drawing->file_path) }}」？')">
+                @csrf @method('DELETE')
+                <button type="submit" class="icon-btn danger" style="width:26px;height:26px;" title="删除">✕</button>
+              </form>
+            @endif
+          </div>
         </div>
-      </div>
-      <div class="modal-foot" style="justify-content:space-between;">
-        <div>
-          @if($isReplace && $lang !== 'zh' && $user->canManageContent())
-            <button type="submit" form="lang-remove-form-{{ $version->id }}-{{ $lang }}" class="btn btn-sm" style="color:var(--danger);border-color:var(--danger-bg);">移除此语言</button>
-          @endif
+      @empty
+        <p class="hint" style="margin:0 0 10px;">暂无 PDF 文件</p>
+      @endforelse
+
+      @if($user->canManageContent())
+        <form method="POST" action="{{ route('version-drawing.store', [$version, $lang, 'pdf']) }}" enctype="multipart/form-data" class="async-upload-form" data-upload-label="追加{{ $langLabel[$lang] }} PDF · {{ $version->version_no }}" style="margin:8px 0 18px;">
+          @csrf
+          <div class="field-row">
+            <div class="field" style="margin-bottom:0;flex:1;"><input type="file" name="files[]" accept=".pdf" multiple></div>
+            <button type="submit" class="btn btn-sm">追加 PDF</button>
+          </div>
+        </form>
+      @endif
+
+      <div class="lang-section-head">变更说明文件{{ $docFile?->doc_path ? '' : '（暂无）' }}</div>
+      @if($docFile?->doc_path)
+        <div class="spec-admin-row" style="padding:8px 0;">
+          <div class="spec-admin-head" style="margin-bottom:0;">
+            <span class="sa-name" style="flex:none;font-family:var(--font-mono);font-size:12.5px;">{{ basename($docFile->doc_path) }}</span>
+            <span style="font-size:11px;color:var(--muted);">{{ $formatSize($docFile->doc_size) }}</span>
+            <div class="spacer"></div>
+            <a class="icon-btn" style="width:26px;height:26px;" title="下载" href="{{ route('version-file.download', [$version, $lang]) }}">↓</a>
+            @if($user->canManageContent())
+              <form method="POST" action="{{ route('version-file.destroy', [$version, $lang]) }}" onsubmit="return confirm('确定移除说明文件？')">
+                @csrf @method('DELETE')
+                <button type="submit" class="icon-btn danger" style="width:26px;height:26px;" title="移除">✕</button>
+              </form>
+            @endif
+          </div>
         </div>
-        <div style="display:flex;gap:8px;">
-          <button type="button" class="btn btn-ghost" onclick="document.getElementById('lang-modal-{{ $version->id }}-{{ $lang }}').style.display='none'">取消</button>
-          <button type="submit" class="btn btn-accent">保存</button>
-        </div>
-      </div>
-    </form>
-    @if($isReplace && $lang !== 'zh' && $user->canManageContent())
-      <form id="lang-remove-form-{{ $version->id }}-{{ $lang }}" method="POST" action="{{ route('version-file.destroy', [$version, $lang]) }}" onsubmit="return confirm('确定移除{{ $langLabel[$lang] }}版本？')" style="display:none;">
-        @csrf @method('DELETE')
-      </form>
-    @endif
+      @endif
+      @if($user->canManageContent())
+        <form method="POST" action="{{ route('version-file.store', [$version, $lang]) }}" enctype="multipart/form-data" class="async-upload-form" data-upload-label="{{ $docFile?->doc_path ? '替换' : '上传' }}{{ $langLabel[$lang] }}说明文件 · {{ $version->version_no }}" style="margin:8px 0 0;">
+          @csrf
+          <div class="field-row">
+            <div class="field" style="margin-bottom:0;flex:1;"><input type="file" name="doc" accept=".doc,.docx,.xls,.xlsx,.pdf,.txt,.dwg"></div>
+            <button type="submit" class="btn btn-sm">{{ $docFile?->doc_path ? '替换' : '上传' }}</button>
+          </div>
+        </form>
+      @endif
+
+      @error('drawing')<p class="error-text" style="margin-top:12px;">{{ $message }}</p>@enderror
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" onclick="document.getElementById('lang-modal-{{ $version->id }}-{{ $lang }}').style.display='none'">关闭</button>
+    </div>
   </div>
 </div>

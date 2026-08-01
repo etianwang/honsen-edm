@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\VersionFile;
+use App\Models\VersionDrawing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\SetsUpDomainFixtures;
 use Tests\TestCase;
@@ -21,9 +21,9 @@ class DwgPreviewTest extends TestCase
         $user = $this->makeUser(User::ROLE_CONSTRUCTION, [$project], teams: [$specialty->team]);
 
         // 有 dwg 但没转出 dxf（比如没装 ODA File Converter），预览接口应该优雅地 404 而不是报错
-        VersionFile::create(['version_id' => $version->id, 'language' => 'zh', 'dwg_path' => 'fake/a.dwg']);
+        $drawing = VersionDrawing::create(['version_id' => $version->id, 'language' => 'zh', 'kind' => 'dwg', 'file_path' => 'fake/a.dwg']);
 
-        $response = $this->actingAs($user)->get("/versions/{$version->id}/files/zh/dxf");
+        $response = $this->actingAs($user)->get("/version-drawings/{$drawing->id}/dxf");
 
         $response->assertNotFound();
     }
@@ -38,9 +38,9 @@ class DwgPreviewTest extends TestCase
 
         \Illuminate\Support\Facades\Storage::fake('local');
         \Illuminate\Support\Facades\Storage::disk('local')->put('demo.dxf', '0\nSECTION\n0\nENDSEC\n0\nEOF');
-        VersionFile::create(['version_id' => $version->id, 'language' => 'zh', 'dwg_path' => 'fake/a.dwg', 'dxf_path' => 'demo.dxf']);
+        $drawing = VersionDrawing::create(['version_id' => $version->id, 'language' => 'zh', 'kind' => 'dwg', 'file_path' => 'fake/a.dwg', 'dxf_path' => 'demo.dxf']);
 
-        $response = $this->actingAs($user)->get("/versions/{$version->id}/files/zh/dxf");
+        $response = $this->actingAs($user)->get("/version-drawings/{$drawing->id}/dxf");
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/dxf');
@@ -55,9 +55,9 @@ class DwgPreviewTest extends TestCase
         // 没有分配这个团队的权限
         $outsider = $this->makeUser(User::ROLE_CONSTRUCTION, [$project]);
 
-        VersionFile::create(['version_id' => $version->id, 'language' => 'zh', 'dwg_path' => 'fake/a.dwg', 'dxf_path' => 'demo.dxf']);
+        $drawing = VersionDrawing::create(['version_id' => $version->id, 'language' => 'zh', 'kind' => 'dwg', 'file_path' => 'fake/a.dwg', 'dxf_path' => 'demo.dxf']);
 
-        $response = $this->actingAs($outsider)->get("/versions/{$version->id}/files/zh/dxf");
+        $response = $this->actingAs($outsider)->get("/version-drawings/{$drawing->id}/dxf");
 
         $response->assertForbidden();
     }

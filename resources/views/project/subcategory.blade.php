@@ -7,10 +7,6 @@
   $versions = $subcategory->versions;
   $latest = $versions->first();
   $history = $versions->slice(1);
-  $formatSize = function ($bytes) {
-      if (! $bytes) return '—';
-      return $bytes >= 1048576 ? round($bytes / 1048576, 1).'MB' : round($bytes / 1024).'KB';
-  };
 @endphp
 <div class="shell">
   @include('partials.sidebar')
@@ -50,10 +46,7 @@
             <span class="date-mono">{{ $latest->publish_date->format('Y-m-d') }} 发布</span>
             <div class="spacer"></div>
             <div class="ops-row">
-              @php($firstPreviewLang = collect(['zh','fr','en'])->first(fn($l) => $latest->fileFor($l)))
-              @php($firstPreviewFile = $firstPreviewLang ? $latest->fileFor($firstPreviewLang) : null)
-              <button type="button" class="icon-btn" title="预览"
-                onclick="document.getElementById('preview-modal-{{ $latest->id }}').style.display='flex'; honsenLoadDxfPreview('{{ $latest->id }}', '{{ $firstPreviewLang }}', {{ json_encode($firstPreviewFile?->hasInteractivePreview() ?? false) }}, {{ json_encode($firstPreviewFile ? route('version-file.dxf', [$latest, $firstPreviewLang]) : null) }})">👁</button>
+              <button type="button" class="icon-btn" title="预览" onclick="document.getElementById('preview-modal-{{ $latest->id }}').style.display='flex'">👁</button>
               @if($user->canManageContent())
                 <form method="POST" action="{{ route('version.destroy', $latest) }}" onsubmit="return confirm('确定删除该版本记录（含所有语言文件）？此操作不可撤销。')">
                   @csrf @method('DELETE')
@@ -64,20 +57,23 @@
           </div>
           <p class="latest-desc">{{ $latest->description }}</p>
           <div class="latest-row2">
-            @php($zh = $latest->fileFor('zh'))
+            @php($zhDwgCount = $latest->drawingsFor('zh', \App\Models\VersionDrawing::KIND_DWG)->count())
+            @php($zhPdfCount = $latest->drawingsFor('zh', \App\Models\VersionDrawing::KIND_PDF)->count())
             <div class="file-chips">
-              @if($zh?->dwg_path)
-                <a class="file-chip" href="{{ route('version-file.download', [$latest, 'zh', 'dwg']) }}"><span class="fname">{{ basename($zh->dwg_path) }}</span><span style="color:var(--muted)">{{ $formatSize($zh->dwg_size) }}</span></a>
+              <span class="file-chip" style="cursor:pointer;" onclick="document.getElementById('lang-modal-{{ $latest->id }}-zh').style.display='flex'">DWG × {{ $zhDwgCount }}</span>
+              @if($zhPdfCount > 0)
+                <span class="file-chip" style="cursor:pointer;" onclick="document.getElementById('lang-modal-{{ $latest->id }}-zh').style.display='flex'">PDF × {{ $zhPdfCount }}</span>
               @endif
-              @if($zh?->doc_path)
-                <a class="file-chip" href="{{ route('version-file.download', [$latest, 'zh', 'doc']) }}"><span class="fname">{{ basename($zh->doc_path) }}</span><span style="color:var(--muted)">{{ $formatSize($zh->doc_size) }}</span></a>
+              @php($zhDoc = $latest->fileFor('zh'))
+              @if($zhDoc?->doc_path)
+                <a class="file-chip" href="{{ route('version-file.download', [$latest, 'zh']) }}"><span class="fname">{{ basename($zhDoc->doc_path) }}</span></a>
               @endif
             </div>
+            @php($availableLangs = $latest->availableLanguages())
             <div class="lang-badges">
               @foreach(['zh','fr','en'] as $lang)
-                @php($file = $latest->fileFor($lang))
-                @if($file)
-                  <span class="lang-pill present" style="cursor:pointer;" onclick="document.getElementById('lang-modal-{{ $latest->id }}-{{ $lang }}').style.display='flex'" title="{{ $langLabel[$lang] }}版本 · 点击替换 / 移除">{{ $langShort[$lang] }}</span>
+                @if($availableLangs->contains($lang))
+                  <span class="lang-pill present" style="cursor:pointer;" onclick="document.getElementById('lang-modal-{{ $latest->id }}-{{ $lang }}').style.display='flex'" title="{{ $langLabel[$lang] }}版本 · 点击管理文件">{{ $langShort[$lang] }}</span>
                 @elseif($user->canManageContent())
                   <span class="lang-pill missing addable" onclick="document.getElementById('lang-modal-{{ $latest->id }}-{{ $lang }}').style.display='flex'" title="补充{{ $langLabel[$lang] }}版本">+{{ $langShort[$lang] }}</span>
                 @else
@@ -109,10 +105,10 @@
                   <td class="mono">{{ $v->version_no }}</td>
                   <td class="mono">{{ $v->publish_date->format('Y-m-d') }}</td>
                   <td>
+                    @php($vAvailableLangs = $v->availableLanguages())
                     <div class="lang-badges">
                       @foreach(['zh','fr','en'] as $lang)
-                        @php($file = $v->fileFor($lang))
-                        <span class="lang-pill {{ $file ? 'present' : 'missing' }}">{{ $langShort[$lang] }}</span>
+                        <span class="lang-pill {{ $vAvailableLangs->contains($lang) ? 'present' : 'missing' }}">{{ $langShort[$lang] }}</span>
                       @endforeach
                     </div>
                   </td>
@@ -120,14 +116,10 @@
                   <td class="mono">{{ $v->uploader?->name ?? '—' }}</td>
                   <td class="ops">
                     <div class="ops-row">
-                      @php($vFirstLang = collect(['zh','fr','en'])->first(fn($l) => $v->fileFor($l)))
-                      @php($vFirstFile = $vFirstLang ? $v->fileFor($vFirstLang) : null)
-                      <button type="button" class="icon-btn" title="预览"
-                        onclick="document.getElementById('preview-modal-{{ $v->id }}').style.display='flex'; honsenLoadDxfPreview('{{ $v->id }}', '{{ $vFirstLang }}', {{ json_encode($vFirstFile?->hasInteractivePreview() ?? false) }}, {{ json_encode($vFirstFile ? route('version-file.dxf', [$v, $vFirstLang]) : null) }})">👁</button>
+                      <button type="button" class="icon-btn" title="预览" onclick="document.getElementById('preview-modal-{{ $v->id }}').style.display='flex'">👁</button>
                       @include('project.partials.preview-modal', ['version' => $v])
-                      @php($vzh = $v->fileFor('zh'))
-                      @if($vzh?->dwg_path)
-                        <a class="icon-btn" title="下载图纸" href="{{ route('version-file.download', [$v, 'zh', 'dwg']) }}">↓</a>
+                      @if($vAvailableLangs->contains('zh'))
+                        <a class="icon-btn" title="下载中文全部文件（ZIP）" href="{{ route('version.language-zip', [$v, 'zh']) }}">↓</a>
                       @endif
                       @if($user->canManageContent())
                         <form method="POST" action="{{ route('version.destroy', $v) }}" onsubmit="return confirm('确定删除该版本记录（含所有语言文件）？此操作不可撤销。')">
@@ -163,29 +155,31 @@
         <div class="field"><label>变更说明（中文）</label><textarea name="description" placeholder="简要描述本次变更内容..." required></textarea></div>
 
         <div class="lang-section zh">
-          <div class="lang-section-head">中文（必填 · 内部使用）</div>
+          <div class="lang-section-head">中文（DWG 必填 · 内部使用）</div>
           <div class="field-row">
-            <div class="field" style="margin-bottom:0;"><label>图纸文件（DWG）</label><input type="file" name="zh_dwg" accept=".dwg,.dxf" required></div>
-            <div class="field" style="margin-bottom:0;"><label>变更说明文件</label><input type="file" name="zh_doc" accept=".doc,.docx,.xls,.xlsx,.pdf" required></div>
+            <div class="field" style="margin-bottom:0;"><label>图纸文件（DWG，可多选，比如每层一张）</label><input type="file" name="zh_dwg[]" accept=".dwg,.dxf" multiple required></div>
+            <div class="field" style="margin-bottom:0;"><label>PDF 图纸（可选，可多选）</label><input type="file" name="zh_pdf[]" accept=".pdf" multiple></div>
           </div>
+          <div class="field" style="margin-bottom:0;margin-top:12px;"><label>变更说明文件（可选，doc/docx/xls/xlsx/pdf/txt/dwg 任一）</label><input type="file" name="zh_doc" accept=".doc,.docx,.xls,.xlsx,.pdf,.txt,.dwg"></div>
         </div>
         <div class="lang-section">
           <div class="lang-section-head">法语（可选 · 外发时使用）</div>
           <div class="field-row">
-            <div class="field" style="margin-bottom:0;"><label>图纸文件（DWG）</label><input type="file" name="fr_dwg" accept=".dwg,.dxf"></div>
-            <div class="field" style="margin-bottom:0;"><label>变更说明文件</label><input type="file" name="fr_doc" accept=".doc,.docx,.xls,.xlsx,.pdf"></div>
+            <div class="field" style="margin-bottom:0;"><label>图纸文件（DWG，可多选）</label><input type="file" name="fr_dwg[]" accept=".dwg,.dxf" multiple></div>
+            <div class="field" style="margin-bottom:0;"><label>PDF 图纸（可选，可多选）</label><input type="file" name="fr_pdf[]" accept=".pdf" multiple></div>
           </div>
+          <div class="field" style="margin-bottom:0;margin-top:12px;"><label>变更说明文件（可选）</label><input type="file" name="fr_doc" accept=".doc,.docx,.xls,.xlsx,.pdf,.txt,.dwg"></div>
         </div>
         <div class="lang-section">
           <div class="lang-section-head">英语（可选 · 外发时使用）</div>
           <div class="field-row">
-            <div class="field" style="margin-bottom:0;"><label>图纸文件（DWG）</label><input type="file" name="en_dwg" accept=".dwg,.dxf"></div>
-            <div class="field" style="margin-bottom:0;"><label>变更说明文件</label><input type="file" name="en_doc" accept=".doc,.docx,.xls,.xlsx,.pdf"></div>
+            <div class="field" style="margin-bottom:0;"><label>图纸文件（DWG，可多选）</label><input type="file" name="en_dwg[]" accept=".dwg,.dxf" multiple></div>
+            <div class="field" style="margin-bottom:0;"><label>PDF 图纸（可选，可多选）</label><input type="file" name="en_pdf[]" accept=".pdf" multiple></div>
           </div>
+          <div class="field" style="margin-bottom:0;margin-top:12px;"><label>变更说明文件（可选）</label><input type="file" name="en_doc" accept=".doc,.docx,.xls,.xlsx,.pdf,.txt,.dwg"></div>
         </div>
-        <p class="hint">法语 / 英语版本仅在该图纸需要外发时上传；内部使用的图纸只需上传中文版本，其余语言可以之后随时在版本记录里补充。</p>
+        <p class="hint">法语 / 英语版本仅在该图纸需要外发时上传；内部使用的图纸只需上传中文 DWG，其余都可以之后随时在版本记录里补充。DWG / PDF 都支持一次选多个文件，也可以之后单独追加或删除某一份。</p>
         @error('zh_dwg')<p class="error-text">{{ $message }}</p>@enderror
-        @error('zh_doc')<p class="error-text">{{ $message }}</p>@enderror
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-ghost" onclick="document.getElementById('upload-modal').style.display='none'">取消</button>

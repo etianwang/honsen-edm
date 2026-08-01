@@ -27,7 +27,7 @@ class NotificationTest extends TestCase
             'version_no' => 'V1',
             'publish_date' => now()->toDateString(),
             'description' => '测试变更说明',
-            'zh_dwg' => UploadedFile::fake()->create('a.dwg', 100),
+            'zh_dwg' => [UploadedFile::fake()->create('a.dwg', 100)],
             'zh_doc' => UploadedFile::fake()->create('a.docx', 50),
         ]);
     }

@@ -24,10 +24,7 @@ class VersionFilePolicy
 
     public function delete(User $user, VersionFile $versionFile): bool
     {
-        if ($versionFile->language === 'zh') {
-            return false; // 中文版本为必填，不允许移除
-        }
-
+        // 说明文件现在所有语言都是可选的，DWG 的"中文至少留一份"规则在 VersionDrawing 那边处理
         return $user->canManageContent()
             && $user->hasProjectAccess($versionFile->version->subcategory->project)
             && $user->hasTeamAccess($versionFile->version->subcategory->specialty->team);
