@@ -67,8 +67,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/version-drawings/{drawing}/download', [VersionDrawingController::class, 'download'])
             ->name('version-drawing.download');
-        Route::get('/version-drawings/{drawing}/dxf', [VersionDrawingController::class, 'dxf'])
-            ->name('version-drawing.dxf');
+        Route::get('/version-drawings/{drawing}/preview', [VersionDrawingController::class, 'preview'])
+            ->name('version-drawing.preview');
         Route::get('/versions/{version}/languages/{language}/zip', [VersionDrawingController::class, 'downloadZip'])
             ->name('version.language-zip');
     });

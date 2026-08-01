@@ -1,14 +1,14 @@
 # 图纸变更管理系统
 
 内部工具 · Honsen Africa（弘盛机电）
-用来替代微信群传图纸：按 国家 → 项目 → 团队/专业 → 细分类 → 版本 组织图纸变更，支持中/法/英三语言文件、DWG 在线预览、站内通知。
+用来替代微信群传图纸：按 国家 → 项目 → 团队/专业 → 细分类 → 版本 组织图纸变更，支持中/法/英三语言文件（DWG 原图 + PDF 图纸均可多份）、PDF 图纸在线预览、站内通知。
 
 详细设计和功能说明见 [docs/](docs)：
 
 - [架构与实施方案.md](docs/架构与实施方案.md) —— 权限模型、技术栈、待确认事项的最终结论
 - [数据库设计.md](docs/数据库设计.md) —— 表结构
 - [COS接入说明.md](docs/COS接入说明.md) —— 腾讯云 COS 文件存储配置
-- [DWG看图接入说明.md](docs/DWG看图接入说明.md) —— DWG→DXF 转换 + 浏览器交互式看图
+- [DWG看图接入说明.md](docs/DWG看图接入说明.md) —— **已停用**，历史记录：曾经的 DWG→DXF 转换 + 浏览器交互式看图方案，现已改为 PDF 预览
 - [验收清单.md](docs/验收清单.md) —— 对照原型的手动验收清单
 
 ## 技术栈
@@ -18,7 +18,7 @@
 | 后端 | PHP 8.4 + Laravel 13 |
 | 数据库 | PostgreSQL |
 | 文件存储 | 腾讯云 COS（本地开发可退化为本地磁盘） |
-| 前端 | Blade + Alpine.js（无构建步骤），dxf-viewer（CDN ESM，浏览器端 DWG 交互式看图） |
+| 前端 | Blade + Alpine.js（无构建步骤），图纸预览用浏览器自带 PDF 阅读器（iframe 内嵌，无需额外依赖） |
 | 认证 | 工号 / 手机号登录，四级角色（施工方/设计师/管理员/超级管理员） |
 
 ## 本地开发
@@ -51,7 +51,7 @@ php artisan test   # 用内存 SQLite，不需要额外配置
 
 ## 生产环境部署（Docker，推荐）
 
-裸机在 Ubuntu 上装 PHP/Composer/扩展/ODA File Converter 步骤繁琐、容易环境不一致，项目提供了 `Dockerfile` + `docker-compose.yml` 把应用本身（PHP-FPM + Nginx + 队列 worker）打包成镜像。**PostgreSQL 仍然沿用宿主机上已经装好的（比如宝塔管理的那个），不放进容器**，架构更简单、也不用额外操心数据卷备份数据库。
+裸机在 Ubuntu 上装 PHP/Composer/扩展步骤繁琐、容易环境不一致，项目提供了 `Dockerfile` + `docker-compose.yml` 把应用本身（PHP-FPM + Nginx）打包成镜像。**PostgreSQL 仍然沿用宿主机上已经装好的（比如宝塔管理的那个），不放进容器**，架构更简单、也不用额外操心数据卷备份数据库。
 
 ### 1. 服务器上装 Docker
 
@@ -60,11 +60,7 @@ curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER   # 加完组需要重新登录一次 shell 才生效
 ```
 
-### 2. （可选）放好 ODA File Converter
-
-DWG→DXF 转换需要 ODA File Converter，官网需要人工注册下载，不能在构建时自动拉取。按 [docker/oda/README.md](docker/oda/README.md) 把下载好的 `.deb` 放进 `docker/oda/` 目录再构建；不放的话镜像照样能建，只是 DWG 交互式预览会被跳过。
-
-### 3. 配置 `.env`
+### 2. 配置 `.env`
 
 ```bash
 cp .env.example .env
@@ -81,7 +77,7 @@ DB_HOST=host.docker.internal
 # 比如 postgresql.conf 里 listen_addresses = '*'，并在 pg_hba.conf 里放行 Docker 的网段（一般是 172.16.0.0/12）
 ```
 
-### 4. 构建 + 启动
+### 3. 构建 + 启动
 
 ```bash
 docker compose build
@@ -90,13 +86,13 @@ docker compose exec app php artisan migrate --force
 docker compose exec app php artisan app:create-admin
 ```
 
-`app` 容器监听宿主机 `8080` 端口（`docker-compose.yml` 里可改），`worker` 容器跑 `php artisan queue:work` 处理站内通知等队列任务。
+`app` 容器监听宿主机 `8080` 端口（`docker-compose.yml` 里可改）。
 
-### 5. 宝塔面板：反向代理 + HTTPS
+### 4. 宝塔面板：反向代理 + HTTPS
 
 不需要给这个站点选 PHP 版本或伪静态规则了（都在容器里），只需要：网站 → 添加站点 → **反向代理**，目标 URL 填 `http://127.0.0.1:8080`；SSL 证书照常在宝塔面板申请、开启强制 HTTPS。
 
-### 6. 后续更新代码怎么发布
+### 5. 后续更新代码怎么发布
 
 ```bash
 cd /www/wwwroot/honsen-drawing
@@ -106,9 +102,9 @@ docker compose up -d
 docker compose exec app php artisan migrate --force
 ```
 
-### 7. 上线前确认
+### 6. 上线前确认
 
-和下面裸机部署第 12 步的检查表一样（`.env` 三项、没跑过 `db:seed`、HTTPS、COS 配置、ODA 转换器、`storage/` 权限），但 `storage/` 权限已经在镜像构建时处理好，不需要手动 `chown`。
+和下面裸机部署第 11 步的检查表一样（`.env` 三项、没跑过 `db:seed`、HTTPS、COS 配置、`storage/` 权限），但 `storage/` 权限已经在镜像构建时处理好，不需要手动 `chown`。
 
 ---
 
@@ -120,12 +116,10 @@ docker compose exec app php artisan migrate --force
 
 ```bash
 sudo apt update
-sudo apt install -y postgresql postgresql-contrib xvfb gdebi-core git unzip
+sudo apt install -y postgresql postgresql-contrib git unzip
 ```
 
 - `postgresql`：数据库
-- `xvfb`：给 DWG→DXF 转换用的虚拟显示器（见下文第 8 步）
-- `gdebi-core`：装 ODA File Converter 的 `.deb` 包要用
 
 ### 2. PHP（宝塔面板操作）
 
@@ -212,9 +206,6 @@ COS_SECRET_KEY=真实密钥
 COS_BUCKET=真实桶名
 COS_APP_ID=真实APPID
 COS_DOMAIN=真实域名（比如全球加速域名，配置方式见 docs/COS接入说明.md）
-
-ODA_CONVERTER_PATH=/usr/bin/ODAFileConverter
-ODA_USE_XVFB=true
 ```
 
 `APP_DEBUG=false` 这一条尤其重要——开着的话报错会把完整堆栈和部分环境变量直接展示在页面上。`SESSION_SECURE_COOKIE=true` 要求站点必须已经是 HTTPS（见第 9 步），不然登录会一直失败（Cookie 发不出去）。
@@ -230,23 +221,7 @@ php artisan app:create-admin
 
 进去之后用这个超级管理员账号登录后台，把公司的团队/专业结构、真实项目、真实账号都建起来。
 
-### 8. DWG 看图：装 ODA File Converter
-
-```bash
-wget "https://www.opendesign.com/guestfiles/get?filename=ODAFileConverter_QT6_lnxX64_8.3dll_27.1.deb" -O ODAFileConverter.deb
-sudo gdebi ODAFileConverter.deb
-# 如果 gdebi 提示缺依赖：
-# sudo dpkg -i ODAFileConverter.deb && sudo apt --fix-broken install -y
-
-# Ubuntu 22/24 可能还缺一个符号链接：
-cd /usr/lib/x86_64-linux-gnu && sudo ln -s libxcb-util.so.1 libxcb-util.so.0
-
-which ODAFileConverter   # 确认装到哪了，一般是 /usr/bin/ODAFileConverter
-```
-
-确认路径后填回第 6 步 `.env` 的 `ODA_CONVERTER_PATH`。详细原理和排错见 [docs/DWG看图接入说明.md](docs/DWG看图接入说明.md)。
-
-### 9. 性能优化 + 目录权限
+### 8. 性能优化 + 目录权限
 
 ```bash
 php artisan config:cache
@@ -259,29 +234,7 @@ sudo chmod -R 775 storage bootstrap/cache
 
 （`www` 是宝塔默认的运行用户，如果你的面板配置了别的运行用户，换成对应的名字。以后每次改了 `.env` 或者路由/配置，都要重新跑一次 `config:cache`/`route:cache`，不然改动不会生效。）
 
-### 10. 队列 worker（DWG→DXF 后台转换必需）
-
-上传变更时，DWG→DXF 的转换不再同步等待（单个文件最多可能耗时 60 秒），改成丢进队列（`QUEUE_CONNECTION=database`，`.env` 里已经配好）异步处理。**这意味着必须有一个常驻进程在跑 `php artisan queue:work`，否则任务会一直堆在数据库的 `jobs` 表里，图纸预览会永远停在"转换中"，不会有任何报错提示**——这一点很容易漏掉，务必按下面配置。
-
-宝塔面板 → **软件商店** → 搜索安装 **Supervisor 管理器**，装好后：
-
-1. 打开 Supervisor 管理器 → **添加守护进程**
-2. 名称：`honsen-edm-queue`
-3. 启动用户：`www`（跟网站运行用户一致）
-4. 运行目录：`/www/wwwroot/honsen-drawing`
-5. 启动命令：
-   ```bash
-   php artisan queue:work --sleep=3 --tries=3 --max-time=3600
-   ```
-   （`--max-time=3600` 让进程每小时自动重启一次，避免 PHP 常驻进程长期运行后内存/连接状态累积问题；Supervisor 会在它退出后自动拉起新的，不影响任务处理）
-6. 进程数：1 个就够（这是内部工具量级，不需要并发 worker）
-7. 保存并启动，在 Supervisor 管理器里确认状态是"运行中"
-
-验证：随便上传一次带 DWG 的变更，几秒内 `jobs` 表里应该能看到一条记录被取走处理；1～2 分钟内该语言版本的"转换中"应该会变成可以在线预览。如果一直不变，先看 Supervisor 管理器里进程有没有报错退出，再看 `storage/logs/laravel.log`。
-
-以后每次 `git pull` 更新代码后，如果改动涉及 `app/Jobs/`，记得在 Supervisor 管理器里重启一下这个守护进程，让它跑最新代码（跟 PHP-FPM 需要重启同理）。
-
-### 11. 宝塔面板：网站 + HTTPS
+### 9. 宝塔面板：网站 + HTTPS
 
 1. **网站 → 站点设置 → 网站目录**：把根目录改成 `/www/wwwroot/honsen-drawing/public`（**注意是 `public` 子目录，不是项目根目录**——这一步最容易出错，指错了会导致 `.env`、`vendor/` 这些敏感文件能被直接下载）
 2. **网站 → 设置 → PHP 版本**：选第 2 步装好的 PHP 8.4
@@ -293,21 +246,20 @@ sudo chmod -R 775 storage bootstrap/cache
    ```
 4. **网站 → 设置 → SSL**：申请 Let's Encrypt 免费证书，一键开启，并且勾选"强制 HTTPS"
 
-### 12. 防火墙
+### 10. 防火墙
 
 宝塔面板 → **安全**：只放行 80、443（网站）和你自己登录用的 SSH 端口；PostgreSQL 只监听本机不用额外开端口；宝塔面板自己的端口（默认 8888）建议只允许你自己的公网 IP 访问。
 
-### 13. 上线前最后确认一遍
+### 11. 上线前最后确认一遍
 
-对照 [验收清单.md](docs/验收清单.md) 把关键流程（登录、上传变更、语言补充、DWG 预览、权限隔离、通知）手动过一遍，再对照下面这份检查表：
+对照 [验收清单.md](docs/验收清单.md) 把关键流程（登录、上传变更、语言补充、图纸预览、权限隔离、通知）手动过一遍，再对照下面这份检查表：
 
 - [ ] `.env`：`APP_ENV=production`、`APP_DEBUG=false`、`SESSION_SECURE_COOKIE=true`
 - [ ] 没有跑过 `php artisan db:seed`，账号都是通过 `app:create-admin` 或后台"账号管理"页面创建的
 - [ ] 网站目录指向 `public` 子目录，不是项目根目录
 - [ ] HTTPS 证书生效，且强制跳转
 - [ ] `FILESYSTEM_DISK=cos` 且已经用真实密钥验证过上传/下载
-- [ ] ODA File Converter 装好，随便传一张真实 DWG 测一下能不能在线看图
-- [ ] Supervisor 里 `honsen-edm-queue` 守护进程状态正常，DWG 转换任务能被正常处理（不会一直卡在"转换中"）
+- [ ] 随便传一张真实 PDF 测一下图纸预览能不能正常打开
 - [ ] `storage/` 和 `bootstrap/cache/` 目录属主和权限正确，不然日志写不进去、上传会报 500
 
 ### 后续更新代码怎么发布

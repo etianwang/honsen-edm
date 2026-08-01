@@ -93,6 +93,25 @@ class CosFileService
     }
 
     /**
+     * 带有效期的签名"预览" URL：不强制下载（inline），用于 PDF 在浏览器里直接打开查看
+     */
+    public function signedViewUrl(string $path): string
+    {
+        if ($this->disk === 'cos') {
+            return Storage::disk('cos')->temporaryUrl(
+                $path,
+                now()->addSeconds((int) config('services.cos.sign_url_ttl', 600)),
+                ['ResponseContentDisposition' => 'inline']
+            );
+        }
+
+        return Storage::disk($this->disk)->temporaryUrl(
+            $path,
+            now()->addSeconds((int) config('services.cos.sign_url_ttl', 600))
+        );
+    }
+
+    /**
      * 预留：前端直传所需的腾讯云 STS 临时密钥签发。
      * 需要正式的 COS_SECRET_ID / COS_SECRET_KEY / COS_STS_ROLE_ARN 才能真正调用腾讯云 STS 接口，
      * 目前 .env 中是占位值，先返回未配置提示，等拿到真实密钥后接入 qcloud/cos-sdk-v5 的 Sts 类即可。

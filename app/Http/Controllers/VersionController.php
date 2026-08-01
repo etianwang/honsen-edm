@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ConvertVersionDrawingDxf;
 use App\Models\AuditLog;
 use App\Models\Subcategory;
 use App\Models\User;
@@ -47,9 +46,7 @@ class VersionController extends Controller
 
         $data = $request->validate($rules);
 
-        $pendingDxfConversions = [];
-
-        $version = DB::transaction(function () use ($data, $subcategory, $request, &$pendingDxfConversions) {
+        $version = DB::transaction(function () use ($data, $subcategory, $request) {
             $version = Version::create([
                 'subcategory_id' => $subcategory->id,
                 'version_no' => $data['version_no'],
@@ -62,8 +59,7 @@ class VersionController extends Controller
 
             foreach (['zh', 'fr', 'en'] as $lang) {
                 foreach ($request->file("{$lang}_dwg", []) as $dwg) {
-                    $drawing = $this->storeDrawing($dwg, $dir, $lang, VersionDrawing::KIND_DWG, $version->id);
-                    $pendingDxfConversions[] = $drawing->id;
+                    $this->storeDrawing($dwg, $dir, $lang, VersionDrawing::KIND_DWG, $version->id);
                 }
 
                 foreach ($request->file("{$lang}_pdf", []) as $pdf) {
@@ -85,12 +81,6 @@ class VersionController extends Controller
             return $version;
         });
 
-        // DWG→DXF 转换放到后台异步跑（单个文件最多可能耗时 60 秒），变更记录本身立即可见，
-        // 交互式预览转换完之前前端显示"转换中"，不阻塞发布流程
-        foreach ($pendingDxfConversions as $versionDrawingId) {
-            ConvertVersionDrawingDxf::dispatch($versionDrawingId);
-        }
-
         AuditLog::record(Auth::id(), 'create', 'version', $version->id, "上传变更「{$subcategory->name} · {$version->version_no}」");
 
         $this->notifyRelevantUsers($version, $subcategory);
@@ -111,7 +101,7 @@ class VersionController extends Controller
             'file_path' => $result['path'],
             'file_size' => $result['size'],
             'original_name' => $result['original_name'],
-            'dxf_status' => $kind === VersionDrawing::KIND_DWG ? VersionDrawing::DXF_PENDING : null,
+            // DWG→DXF 交互式预览功能已停用（预览改走 PDF），这里不再触发转换，dxf_status 恒为 null
             'uploaded_by' => Auth::id(),
         ]);
     }

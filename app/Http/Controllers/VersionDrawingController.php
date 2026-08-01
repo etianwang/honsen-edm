@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ConvertVersionDrawingDxf;
 use App\Models\AuditLog;
 use App\Models\Version;
 use App\Models\VersionDrawing;
@@ -10,7 +9,6 @@ use App\Services\CosFileService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -41,29 +39,18 @@ class VersionDrawingController extends Controller
         $subcategory = $version->subcategory;
         $dir = "projects/{$subcategory->project_id}/subcategories/{$subcategory->id}/versions/{$version->id}/{$language}/{$kind}";
 
-        $pendingDxfConversions = [];
-
         foreach ($request->file('files') as $file) {
             $result = $this->files->store($file, $dir);
 
-            $drawing = VersionDrawing::create([
+            VersionDrawing::create([
                 'version_id' => $version->id,
                 'language' => $language,
                 'kind' => $kind,
                 'file_path' => $result['path'],
                 'file_size' => $result['size'],
                 'original_name' => $result['original_name'],
-                'dxf_status' => $kind === VersionDrawing::KIND_DWG ? VersionDrawing::DXF_PENDING : null,
                 'uploaded_by' => Auth::id(),
             ]);
-
-            if ($kind === VersionDrawing::KIND_DWG) {
-                $pendingDxfConversions[] = $drawing->id;
-            }
-        }
-
-        foreach ($pendingDxfConversions as $drawingId) {
-            ConvertVersionDrawingDxf::dispatch($drawingId);
         }
 
         $label = self::LABELS[$language];
@@ -116,16 +103,14 @@ class VersionDrawingController extends Controller
     }
 
     /**
-     * 给浏览器端 dxf-viewer 用的原始 DXF 文本，走我们自己的鉴权路由中转
+     * PDF 图纸的在线预览：浏览器自带 PDF 阅读器（iframe 内嵌），走签名 URL 但不强制下载（inline）
      */
-    public function dxf(VersionDrawing $drawing)
+    public function preview(VersionDrawing $drawing): RedirectResponse
     {
         $this->authorize('view', $drawing->version);
-        abort_if(! $drawing->dxf_path, 404);
+        abort_unless($drawing->kind === VersionDrawing::KIND_PDF, 404);
 
-        return Response::make($this->files->getContents($drawing->dxf_path), 200, [
-            'Content-Type' => 'application/dxf',
-        ]);
+        return redirect()->away($this->files->signedViewUrl($drawing->file_path));
     }
 
     /**
