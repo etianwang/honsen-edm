@@ -8,7 +8,7 @@
       <h3>{{ $isReplace ? '替换' : '补充' }}{{ $langLabel[$lang] }}版本 · {{ $version->version_no }}</h3>
       <button type="button" class="modal-close" onclick="document.getElementById('lang-modal-{{ $version->id }}-{{ $lang }}').style.display='none'">&times;</button>
     </div>
-    <form method="POST" action="{{ route('version-file.store', [$version, $lang]) }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('version-file.store', [$version, $lang]) }}" enctype="multipart/form-data" class="async-upload-form" data-upload-label="{{ $isReplace ? '替换' : '补充' }}{{ $langLabel[$lang] }} · {{ $version->version_no }}">
       @csrf
       <div class="modal-body">
         <p class="hint" style="margin:0 0 14px;">

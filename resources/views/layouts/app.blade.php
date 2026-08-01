@@ -196,6 +196,19 @@ td.ops{white-space:nowrap;}
 
 .toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:11px 16px;border-radius:9px;font-size:13px;box-shadow:var(--shadow);z-index:300;}
 
+.upload-queue{position:fixed;top:66px;right:18px;z-index:400;display:none;flex-direction:column;gap:8px;width:260px;}
+.upload-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;box-shadow:var(--shadow);}
+.upload-item .ui-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
+.upload-item .ui-label{font-size:12.5px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.upload-item .ui-pct{font-size:11.5px;color:var(--muted);flex:none;font-variant-numeric:tabular-nums;}
+.upload-item .ui-bar{height:5px;border-radius:3px;background:var(--paper);overflow:hidden;}
+.upload-item .ui-bar-fill{height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width .15s ease;}
+.upload-item.ui-done .ui-bar-fill{background:var(--success);}
+.upload-item.ui-done .ui-pct{color:var(--success);}
+.upload-item.ui-error .ui-bar-fill{background:var(--danger);}
+.upload-item.ui-error .ui-pct{color:var(--danger);}
+.upload-item .ui-err-msg{font-size:11.5px;color:var(--danger);margin-top:6px;line-height:1.5;}
+
 .admin-shell{padding:28px 32px 70px;}
 .admin-inner{max-width:880px;margin:0 auto;}
 .admin-head-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;gap:16px;flex-wrap:wrap;}
@@ -301,6 +314,86 @@ td.ops{white-space:nowrap;}
 @if(session('toast'))
 <div class="toast" x-data="{show:true}" x-show="show" x-init="setTimeout(() => show=false, 2600)">{{ session('toast') }}</div>
 @endif
+
+<div id="upload-queue" class="upload-queue"></div>
+
+<script>
+function honsenAsyncUpload(form) {
+  const modal = form.closest('.overlay');
+  if (modal) modal.style.display = 'none';
+
+  const queue = document.getElementById('upload-queue');
+  const item = document.createElement('div');
+  item.className = 'upload-item';
+  item.innerHTML = '<div class="ui-top"><span class="ui-label"></span><span class="ui-pct">0%</span></div>'
+    + '<div class="ui-bar"><div class="ui-bar-fill"></div></div>';
+  item.querySelector('.ui-label').textContent = form.dataset.uploadLabel || '上传中';
+  queue.appendChild(item);
+  queue.style.display = 'flex';
+
+  const fill = item.querySelector('.ui-bar-fill');
+  const pct = item.querySelector('.ui-pct');
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', form.action, true);
+  xhr.setRequestHeader('Accept', 'application/json');
+
+  xhr.upload.addEventListener('progress', function (ev) {
+    if (ev.lengthComputable) {
+      const p = Math.round((ev.loaded / ev.total) * 100);
+      fill.style.width = p + '%';
+      pct.textContent = p + '%';
+    }
+  });
+
+  xhr.onload = function () {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      fill.style.width = '100%';
+      pct.textContent = '完成';
+      item.classList.add('ui-done');
+      setTimeout(function () {
+        window.location.href = xhr.responseURL || window.location.href;
+      }, 500);
+    } else {
+      item.classList.add('ui-error');
+      pct.textContent = '失败';
+      let msg = '上传失败，请重试';
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (data.errors) msg = Object.values(data.errors).flat().join('；');
+        else if (data.message) msg = data.message;
+      } catch (e) {}
+      const err = document.createElement('div');
+      err.className = 'ui-err-msg';
+      err.textContent = msg;
+      item.appendChild(err);
+      setTimeout(function () {
+        item.remove();
+        if (!queue.children.length) queue.style.display = 'none';
+      }, 6000);
+    }
+  };
+
+  xhr.onerror = function () {
+    item.classList.add('ui-error');
+    pct.textContent = '网络错误';
+    setTimeout(function () {
+      item.remove();
+      if (!queue.children.length) queue.style.display = 'none';
+    }, 6000);
+  };
+
+  xhr.send(new FormData(form));
+}
+
+document.addEventListener('submit', function (e) {
+  if (e.target.classList && e.target.classList.contains('async-upload-form')) {
+    e.preventDefault();
+    honsenAsyncUpload(e.target);
+  }
+});
+</script>
+@stack('scripts')
 
 </body>
 </html>

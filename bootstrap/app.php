@@ -24,7 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // api/* 强制返回 JSON；此外前端异步上传等场景会显式带 Accept: application/json
+        // 来请求 JSON 格式的校验错误（而不是被重定向回原页面看不到具体错误），也要认得。
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
     })->create();

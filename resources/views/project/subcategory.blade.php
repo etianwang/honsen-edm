@@ -152,7 +152,7 @@
 <div id="upload-modal" class="overlay" style="display:none;">
   <div class="modal wide">
     <div class="modal-head"><h3>上传变更</h3><button type="button" class="modal-close" onclick="document.getElementById('upload-modal').style.display='none'">&times;</button></div>
-    <form method="POST" action="{{ route('version.store', $subcategory) }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('version.store', $subcategory) }}" enctype="multipart/form-data" class="async-upload-form" data-upload-label="发布变更 · {{ $subcategory->name }}">
       @csrf
       <div class="modal-body">
         <div class="field"><label>图纸分类</label><input type="text" value="{{ $subcategory->specialty->team->name }} / {{ $subcategory->specialty->name }} / {{ $subcategory->name }}" disabled style="background:var(--paper);color:var(--muted);"></div>
