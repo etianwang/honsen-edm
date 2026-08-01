@@ -92,7 +92,7 @@ class VersionController extends Controller
 
     private function storeDrawing(\Illuminate\Http\UploadedFile $file, string $dir, string $lang, string $kind, int $versionId): VersionDrawing
     {
-        $result = $this->files->store($file, "{$dir}/{$lang}/{$kind}");
+        $result = $this->files->store($file, "{$dir}/{$lang}/{$kind}", inline: $kind === VersionDrawing::KIND_PDF);
 
         return VersionDrawing::create([
             'version_id' => $versionId,

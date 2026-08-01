@@ -23,10 +23,21 @@ class CosFileService
         $this->disk = config('filesystems.default');
     }
 
-    public function store(UploadedFile $file, string $directory): array
+    /**
+     * $inline=true 时会在 COS 对象上设置 Content-Disposition: inline（比如 PDF 图纸），
+     * 让浏览器直接在 iframe 里展示，而不是触发下载。腾讯云 COS 这边预签名 URL 不支持临时
+     * 覆盖响应头（overtrue/qcloud-cos-client 的 getObjectSignedUrl 只签 sign 参数，我们传给
+     * temporaryUrl() 的 ResponseContentDisposition 选项会被静默忽略），所以只能在上传时把
+     * disposition 写进对象本身的元数据，之后每次访问都固定生效。
+     */
+    public function store(UploadedFile $file, string $directory, bool $inline = false): array
     {
         $filename = Str::uuid()->toString().'.'.$file->getClientOriginalExtension();
-        $path = $file->storeAs($directory, $filename, $this->disk);
+        $options = ['disk' => $this->disk];
+        if ($inline) {
+            $options['headers'] = ['Content-Disposition' => 'inline'];
+        }
+        $path = $file->storeAs($directory, $filename, $options);
 
         return [
             'path' => $path,
@@ -74,14 +85,17 @@ class CosFileService
 
     /**
      * 带有效期的签名下载 URL。本地磁盘没有真正的签名机制，退化为走后端中转的下载路由。
+     *
+     * 注意：$downloadName 目前只在本地磁盘生效。COS 那边预签名 URL 不支持临时覆盖
+     * Content-Disposition（见 store() 的说明），下载文件名取决于上传时是否设置了
+     * 对象元数据，这里传的 ResponseContentDisposition 选项会被 SDK 静默忽略。
      */
     public function signedDownloadUrl(string $path, string $downloadName): string
     {
         if ($this->disk === 'cos') {
             return Storage::disk('cos')->temporaryUrl(
                 $path,
-                now()->addSeconds((int) config('services.cos.sign_url_ttl', 600)),
-                ['ResponseContentDisposition' => 'attachment; filename="'.$downloadName.'"']
+                now()->addSeconds((int) config('services.cos.sign_url_ttl', 600))
             );
         }
 
@@ -93,18 +107,12 @@ class CosFileService
     }
 
     /**
-     * 带有效期的签名"预览" URL：不强制下载（inline），用于 PDF 在浏览器里直接打开查看
+     * 带有效期的签名"预览" URL：用于 PDF 在浏览器里直接打开查看（inline，不触发下载）。
+     * 是否真的 inline 取决于上传时 store() 有没有传 $inline=true 把 Content-Disposition
+     * 写进了对象元数据——这里同样不能临时覆盖，见 store() 的说明。
      */
     public function signedViewUrl(string $path): string
     {
-        if ($this->disk === 'cos') {
-            return Storage::disk('cos')->temporaryUrl(
-                $path,
-                now()->addSeconds((int) config('services.cos.sign_url_ttl', 600)),
-                ['ResponseContentDisposition' => 'inline']
-            );
-        }
-
         return Storage::disk($this->disk)->temporaryUrl(
             $path,
             now()->addSeconds((int) config('services.cos.sign_url_ttl', 600))

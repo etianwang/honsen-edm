@@ -40,7 +40,7 @@ class VersionDrawingController extends Controller
         $dir = "projects/{$subcategory->project_id}/subcategories/{$subcategory->id}/versions/{$version->id}/{$language}/{$kind}";
 
         foreach ($request->file('files') as $file) {
-            $result = $this->files->store($file, $dir);
+            $result = $this->files->store($file, $dir, inline: $kind === VersionDrawing::KIND_PDF);
 
             VersionDrawing::create([
                 'version_id' => $version->id,
