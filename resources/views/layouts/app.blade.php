@@ -205,9 +205,13 @@ td.ops{white-space:nowrap;}
 .upload-item .ui-bar-fill{height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width .15s ease;}
 .upload-item.ui-done .ui-bar-fill{background:var(--success);}
 .upload-item.ui-done .ui-pct{color:var(--success);}
+.upload-item.ui-processing .ui-bar-fill{animation:ui-pulse 1.3s ease-in-out infinite;}
+.upload-item.ui-processing .ui-pct{color:var(--accent-dark);}
 .upload-item.ui-error .ui-bar-fill{background:var(--danger);}
 .upload-item.ui-error .ui-pct{color:var(--danger);}
 .upload-item .ui-err-msg{font-size:11.5px;color:var(--danger);margin-top:6px;line-height:1.5;}
+@keyframes ui-pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+@media (prefers-reduced-motion: reduce){.upload-item.ui-processing .ui-bar-fill{animation:none;}}
 
 .admin-shell{padding:28px 32px 70px;}
 .admin-inner{max-width:880px;margin:0 auto;}
@@ -337,16 +341,29 @@ function honsenAsyncUpload(form) {
   const xhr = new XMLHttpRequest();
   xhr.open('POST', form.action, true);
   xhr.setRequestHeader('Accept', 'application/json');
+  xhr.timeout = 240000; // 最多 3 个语言版本，每个 DWG→DXF 转换服务器端最多等 60 秒，留够余量
 
   xhr.upload.addEventListener('progress', function (ev) {
     if (ev.lengthComputable) {
       const p = Math.round((ev.loaded / ev.total) * 100);
       fill.style.width = p + '%';
-      pct.textContent = p + '%';
+      pct.textContent = p < 100 ? (p + '%') : '处理中…';
+      if (p >= 100) item.classList.add('ui-processing');
     }
   });
 
+  xhr.ontimeout = function () {
+    item.classList.remove('ui-processing');
+    item.classList.add('ui-error');
+    pct.textContent = '超时';
+    const err = document.createElement('div');
+    err.className = 'ui-err-msg';
+    err.textContent = '服务器处理时间过长，图纸可能仍在后台转换中，请稍后刷新页面查看是否已发布，避免重复提交。';
+    item.appendChild(err);
+  };
+
   xhr.onload = function () {
+    item.classList.remove('ui-processing');
     if (xhr.status >= 200 && xhr.status < 300) {
       fill.style.width = '100%';
       pct.textContent = '完成';
@@ -375,6 +392,7 @@ function honsenAsyncUpload(form) {
   };
 
   xhr.onerror = function () {
+    item.classList.remove('ui-processing');
     item.classList.add('ui-error');
     pct.textContent = '网络错误';
     setTimeout(function () {
