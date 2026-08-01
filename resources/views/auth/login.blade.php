@@ -18,7 +18,12 @@
     --font-display:'Archivo',sans-serif; --font-body:'IBM Plex Sans','PingFang SC',sans-serif;
   }
   *{box-sizing:border-box;}
-  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);font-family:var(--font-body);color:var(--ink);}
+  body{margin:0;min-height:100vh;display:flex;flex-direction:column;background:var(--paper);font-family:var(--font-body);color:var(--ink);}
+  .login-wrap{flex:1;display:flex;align-items:center;justify-content:center;}
+  .page-footer{padding:16px 20px;text-align:center;font-size:11px;color:var(--muted);}
+  .page-footer a{color:var(--muted);text-decoration:none;}
+  .page-footer a:hover{color:var(--accent);}
+  .page-footer .footer-sep{margin:0 6px;}
   .login-card{width:380px;max-width:92vw;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:32px 30px;box-shadow:0 10px 28px rgba(20,24,28,.08);}
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
   .brand .name{font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--navy);}
@@ -40,6 +45,7 @@
 </style>
 </head>
 <body>
+  <div class="login-wrap">
   <div class="login-card">
     <div class="lang-switch">
       <a href="{{ route('language.switch', 'zh_CN') }}" class="{{ app()->getLocale() === 'zh_CN' ? 'active' : '' }}">中文</a>
@@ -85,5 +91,11 @@
       <button type="submit" class="btn-login">{{ __('登录') }}</button>
     </form>
   </div>
+  </div>
+  <footer class="page-footer">
+    <span>Honsen Africa</span>
+    <span class="footer-sep">&middot;</span>
+    <a href="https://github.com/etianwang" target="_blank" rel="noopener noreferrer">Design by Etienne</a>
+  </footer>
 </body>
 </html>
