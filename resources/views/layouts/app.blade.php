@@ -94,8 +94,8 @@ a{color:inherit;}
 .spec-row .s-count{font-family:var(--font-mono);font-size:10.5px;font-weight:600;color:#DDD1AC;text-shadow:0 1px 2px rgba(0,0,0,.5);}
 .spec-add{flex:none;width:18px;height:18px;border:1px solid rgba(255,244,222,.3);border-radius:5px;background:rgba(0,0,0,.25);color:#D8CFB8;display:flex;align-items:center;justify-content:center;}
 .spec-add:hover{border-color:var(--accent-bg);color:var(--accent-bg);}
-.tree-toggle{flex:none;width:16px;height:16px;border:none;background:none;color:#DDD1AC;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
-.tree-toggle-icon{display:inline-block;font-size:9px;transition:transform .12s ease;}
+.tree-toggle{flex:none;width:18px;height:18px;border:none;background:none;color:#F8F2DE;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
+.tree-toggle-icon{display:inline-block;font-size:13px;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.7);transition:transform .12s ease;}
 .tree-toggle-icon.open{transform:rotate(90deg);}
 .sub-row{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 42px;cursor:pointer;border-left:3px solid transparent;font-size:13.5px;font-weight:600;color:#F3EBD3;text-shadow:0 1px 2px rgba(0,0,0,.5);text-decoration:none;}
 .sub-row:hover{background:rgba(0,0,0,.22);}
