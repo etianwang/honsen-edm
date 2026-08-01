@@ -14,7 +14,10 @@
   <div class="main">
     <div class="main-inner">
       <div class="crumb-nav">
-        <a href="{{ route('project.show', $project) }}">{{ __('总览') }}</a> / {{ $subcategory->specialty->team->name }} / {{ $subcategory->specialty->name }} / <b>{{ $subcategory->name }}</b>
+        <a href="{{ route('project.show', $project) }}">{{ __('总览') }}</a> /
+        <a href="{{ route('project.show', $project) }}?team={{ $subcategory->specialty->team_id }}">{{ $subcategory->specialty->team->name }}</a> /
+        <a href="{{ route('project.show', $project) }}?team={{ $subcategory->specialty->team_id }}">{{ $subcategory->specialty->name }}</a> /
+        <b>{{ $subcategory->name }}</b>
       </div>
 
       <div class="detail-header">
