@@ -1,0 +1,7 @@
+<svg viewBox="0 0 490 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="弘盛图纸管理系统">
+  <rect width="100" height="100" y="10" rx="20" fill="#3A2A18"/>
+  <path d="M22 76 L44 32 L58 52 L68 36 L86 76 Z" fill="#C79A4B"/>
+  <circle cx="44" cy="32" r="5.5" fill="#F1EADB"/>
+  <text x="126" y="66" font-family="Archivo, 'IBM Plex Sans', sans-serif" font-size="38" font-weight="700" fill="#3A2A18">弘盛图纸管理系统</text>
+  <text x="128" y="92" font-family="'IBM Plex Mono', monospace" font-size="13.5" letter-spacing="2" fill="#9C7A3D">HONSEN ENGINEERING DRAWING SYSTEM</text>
+</svg>

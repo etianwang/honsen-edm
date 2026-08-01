@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>{{ __('登录') }} · {{ __('深圳弘盛图纸管理系统') }}</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -43,10 +47,10 @@
       <a href="{{ route('language.switch', 'fr') }}" class="{{ app()->getLocale() === 'fr' ? 'active' : '' }}">Français</a>
     </div>
     <div class="brand">
-      <svg width="32" height="32" viewBox="0 0 30 30" fill="none">
-        <rect x="1.5" y="1.5" width="27" height="27" rx="4" stroke="#BFB7A0" stroke-width="1.3"/>
-        <path d="M7 21 L13 10 L17 16 L20 11 L23 21" stroke="#9C7A3D" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
-        <circle cx="13" cy="10" r="1.4" fill="#3A2A18"/>
+      <svg width="32" height="32" viewBox="0 0 32 32">
+        <rect width="32" height="32" rx="7" fill="#3A2A18"/>
+        <path d="M6 23.5 L13.5 9.5 L17.5 16.5 L21 10.5 L26.5 23.5 Z" fill="#C79A4B"/>
+        <circle cx="13.5" cy="9.5" r="2" fill="#F1EADB"/>
       </svg>
       <div>
         <div class="name">{{ __('深圳弘盛图纸管理系统') }}</div>
