@@ -36,6 +36,8 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('project.access')->group(function () {
         Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('project.show');
+        Route::get('/projects/{project}/teams/{team}', [ProjectController::class, 'showTeam'])->name('project.team');
+        Route::get('/projects/{project}/specialties/{specialty}', [ProjectController::class, 'showSpecialty'])->name('project.specialty');
 
         Route::get('/projects/{project}/subcategories/{subcategory}', [SubcategoryController::class, 'show'])
             ->name('subcategory.show');

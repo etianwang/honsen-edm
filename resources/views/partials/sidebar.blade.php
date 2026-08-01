@@ -1,15 +1,21 @@
 <div class="sidebar" x-data="{}">
   @foreach($tree as $team)
     <div class="team-block" x-data="{open:true}">
-      <div class="team-header" :class="{open:open}" @click="open=!open">
-        <span class="t-name">{{ $team->name }}</span>
+      <div class="team-header" :class="{open:open}">
+        <button type="button" class="tree-toggle" @click="open=!open" aria-label="{{ __('展开或收起') }}">
+          <span class="tree-toggle-icon" :class="{open:open}">&#9656;</span>
+        </button>
+        <a href="{{ route('project.team', [$project, $team]) }}" class="t-name">{{ $team->name }}</a>
         <span class="t-count">{{ $team->specialties->count() }} {{ __('专业') }}</span>
       </div>
       <div class="spec-list" x-show="open">
         @foreach($team->specialties as $specialty)
           <div x-data="{open:true}">
-            <div class="spec-row" @click="open=!open">
-              <span class="s-name">{{ $specialty->name }}</span>
+            <div class="spec-row">
+              <button type="button" class="tree-toggle" @click="open=!open" aria-label="{{ __('展开或收起') }}">
+                <span class="tree-toggle-icon" :class="{open:open}">&#9656;</span>
+              </button>
+              <a href="{{ route('project.specialty', [$project, $specialty]) }}" class="s-name">{{ $specialty->name }}</a>
               <span class="s-count">{{ $specialty->subcategories->count() }}</span>
               @if($user->canManageContent())
                 <button type="button" class="spec-add" title="{{ __('添加细分类') }}"

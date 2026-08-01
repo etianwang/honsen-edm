@@ -39,20 +39,28 @@ button:focus-visible,.sub-row:focus-visible,a:focus-visible,input:focus-visible,
 a{color:inherit;}
 
 .header-stack{position:sticky;top:0;z-index:80;}
-.scope-bar{background:var(--navy-soft);padding:7px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--navy-line);flex-wrap:wrap;row-gap:4px;}
-.scope-group{display:flex;align-items:center;gap:8px;}
-.scope-label{font-size:10px;color:var(--navy-text-dim);text-transform:uppercase;letter-spacing:.04em;flex:none;}
-.scope-tabs{display:flex;gap:3px;flex-wrap:wrap;}
-.scope-tab{background:none;border:none;color:var(--navy-text-dim);font-size:12px;padding:4px 10px;border-radius:6px;font-weight:500;text-decoration:none;display:inline-block;}
-.scope-tab:hover{background:var(--navy-line);color:#fff;}
-.scope-tab.active{background:var(--accent);color:#fff;}
-.scope-divider{width:1px;height:16px;background:var(--navy-line);flex:none;}
+[x-cloak]{display:none!important;}
 .topbar{height:56px;background:var(--navy);color:var(--navy-text);
   display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--navy-line);}
-.brand{display:flex;align-items:center;gap:10px;}
+.topbar-left{display:flex;align-items:center;gap:16px;min-width:0;}
+.brand{display:flex;align-items:center;gap:10px;flex:none;}
 .brand-mark{width:30px;height:30px;flex:none;}
 .brand-text .name{font-family:var(--font-display);font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;}
 .brand-text .sub{font-size:11px;color:var(--navy-text-dim);margin-top:1px;}
+.topbar-divider{width:1px;height:22px;background:var(--navy-line);flex:none;}
+.scope-switch{position:relative;flex:none;}
+.scope-switch-btn{display:flex;align-items:center;gap:6px;background:var(--navy-line);border:none;color:var(--navy-text);font-size:12.5px;padding:6px 10px;border-radius:7px;font-weight:500;max-width:320px;}
+.scope-switch-btn:hover{background:rgba(255,244,222,.18);}
+.scope-switch-btn .sep{color:var(--navy-text-dim);}
+.scope-switch-btn .chev{color:var(--navy-text-dim);font-size:10px;margin-left:2px;}
+.scope-switch-btn .crumb-part{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;}
+.scope-menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:8px;min-width:260px;max-height:70vh;overflow-y:auto;z-index:90;}
+.scope-menu-group{margin-bottom:6px;}
+.scope-menu-group:last-child{margin-bottom:0;}
+.scope-menu-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:4px 8px;}
+.scope-menu-item{display:block;padding:6px 8px;border-radius:6px;font-size:13px;color:var(--ink-soft);text-decoration:none;}
+.scope-menu-item:hover{background:var(--paper);}
+.scope-menu-item.active{background:var(--accent);color:#fff;}
 .topbar-right{display:flex;align-items:center;gap:16px;}
 .user-chip{display:flex;align-items:center;gap:8px;padding-left:16px;border-left:1px solid var(--navy-line);}
 .user-avatar{width:26px;height:26px;border-radius:50%;background:var(--navy-soft);color:var(--navy-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
@@ -76,16 +84,19 @@ a{color:inherit;}
   box-shadow:inset -8px 0 18px rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.25);
 }
 .team-block{margin-bottom:2px;}
-.team-header{display:flex;align-items:center;gap:6px;padding:9px 14px;cursor:pointer;user-select:none;}
+.team-header{display:flex;align-items:center;gap:6px;padding:9px 14px;user-select:none;}
 .team-header:hover{background:rgba(0,0,0,.22);}
-.team-header .t-name{font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:#F8F2DE;text-shadow:0 1px 3px rgba(0,0,0,.6);flex:1;}
+.team-header .t-name{font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:#F8F2DE;text-shadow:0 1px 3px rgba(0,0,0,.6);text-decoration:none;flex:1;}
 .team-header .t-count{font-family:var(--font-mono);font-size:10.5px;font-weight:600;color:#DDD1AC;text-shadow:0 1px 2px rgba(0,0,0,.5);}
-.spec-row{display:flex;align-items:center;gap:6px;padding:7px 14px 7px 26px;cursor:pointer;}
+.spec-row{display:flex;align-items:center;gap:6px;padding:7px 14px 7px 26px;}
 .spec-row:hover{background:rgba(0,0,0,.22);}
-.spec-row .s-name{font-size:13.5px;font-weight:600;color:#F8F2DE;text-shadow:0 1px 3px rgba(0,0,0,.55);flex:1;}
+.spec-row .s-name{font-size:13.5px;font-weight:600;color:#F8F2DE;text-shadow:0 1px 3px rgba(0,0,0,.55);text-decoration:none;flex:1;}
 .spec-row .s-count{font-family:var(--font-mono);font-size:10.5px;font-weight:600;color:#DDD1AC;text-shadow:0 1px 2px rgba(0,0,0,.5);}
 .spec-add{flex:none;width:18px;height:18px;border:1px solid rgba(255,244,222,.3);border-radius:5px;background:rgba(0,0,0,.25);color:#D8CFB8;display:flex;align-items:center;justify-content:center;}
 .spec-add:hover{border-color:var(--accent-bg);color:var(--accent-bg);}
+.tree-toggle{flex:none;width:16px;height:16px;border:none;background:none;color:#DDD1AC;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
+.tree-toggle-icon{display:inline-block;font-size:9px;transition:transform .12s ease;}
+.tree-toggle-icon.open{transform:rotate(90deg);}
 .sub-row{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 42px;cursor:pointer;border-left:3px solid transparent;font-size:13.5px;font-weight:600;color:#F3EBD3;text-shadow:0 1px 2px rgba(0,0,0,.5);text-decoration:none;}
 .sub-row:hover{background:rgba(0,0,0,.22);}
 .sub-row.selected{background:rgba(156,122,61,.4);color:#FFFAEC;text-shadow:0 1px 2px rgba(0,0,0,.45);border-left-color:var(--accent-bg);font-weight:700;box-shadow:inset 0 1px rgba(255,255,255,.1);}
@@ -117,6 +128,14 @@ h2.section-title{font-family:var(--font-display);font-size:15px;font-weight:600;
 .feed-ver{font-family:var(--font-mono);font-size:12.5px;font-weight:500;color:var(--ink);}
 .feed-date{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:2px;}
 .feed-langs{margin-top:4px;justify-content:flex-end;}
+
+.sub-group{margin-bottom:18px;}
+.sub-group-label{font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:500;}
+.sub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.sub-tile{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;text-decoration:none;color:inherit;}
+.sub-tile:hover{box-shadow:var(--shadow);border-color:var(--border-strong);}
+.sub-tile-name{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sub-tile-count{flex:none;font-family:var(--font-mono);font-size:11px;color:var(--muted);background:var(--paper);border-radius:999px;padding:2px 8px;}
 
 .crumb-nav{font-size:12.5px;color:var(--muted);margin-bottom:10px;}
 .crumb-nav a{color:var(--muted);text-decoration:none;cursor:pointer;}
@@ -247,49 +266,53 @@ td.ops{white-space:nowrap;}
 <body>
 
 <div class="header-stack">
-  @isset($countries)
-  <div class="scope-bar">
-    <div class="scope-group">
-      <span class="scope-label">{{ __('国家') }}</span>
-      <div class="scope-tabs">
-        @foreach($countries as $country)
-          @if($country->projects->isNotEmpty())
-            <a href="{{ route('project.show', $country->projects->first()) }}" class="scope-tab {{ isset($project) && $project->country_id === $country->id ? 'active' : '' }}">{{ $country->name }}</a>
-          @else
-            <span class="scope-tab" style="opacity:.5;cursor:default;" title="{{ __('这个国家下还没有项目') }}">{{ $country->name }}</span>
-          @endif
-        @endforeach
-      </div>
-    </div>
-    @if(isset($project))
-    <div class="scope-divider"></div>
-    <div class="scope-group">
-      <span class="scope-label">{{ __('项目') }}</span>
-      <div class="scope-tabs">
-        @foreach($countries as $country)
-          @if($country->id === $project->country_id)
-            @foreach($country->projects as $p)
-              <a href="{{ route('project.show', $p) }}" class="scope-tab {{ $p->id === $project->id ? 'active' : '' }}">{{ $p->name }}</a>
-            @endforeach
-          @endif
-        @endforeach
-      </div>
-    </div>
-    @endif
-  </div>
-  @endisset
 
 <div class="topbar">
-  <div class="brand">
-    <svg class="brand-mark" viewBox="0 0 32 32">
-      <rect width="32" height="32" rx="7" fill="#3A2A18"/>
-      <path d="M6 23.5 L13.5 9.5 L17.5 16.5 L21 10.5 L26.5 23.5 Z" fill="#C79A4B"/>
-      <circle cx="13.5" cy="9.5" r="2" fill="#F1EADB"/>
-    </svg>
-    <div class="brand-text">
-      <div class="name">{{ __('深圳弘盛图纸管理系统') }}</div>
-      <div class="sub">Honsen Africa @isset($project) &middot; {{ $project->name }} @endisset</div>
+  <div class="topbar-left">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32">
+        <rect width="32" height="32" rx="7" fill="#3A2A18"/>
+        <path d="M6 23.5 L13.5 9.5 L17.5 16.5 L21 10.5 L26.5 23.5 Z" fill="#C79A4B"/>
+        <circle cx="13.5" cy="9.5" r="2" fill="#F1EADB"/>
+      </svg>
+      <div class="brand-text">
+        <div class="name">{{ __('深圳弘盛图纸管理系统') }}</div>
+        <div class="sub">Honsen Africa</div>
+      </div>
     </div>
+
+    @isset($countries)
+      @php
+        $currentCountry = isset($project) ? $countries->first(fn($c) => $c->projects->contains('id', $project->id)) : null;
+      @endphp
+      <div class="topbar-divider"></div>
+      <div class="scope-switch" x-data="{open:false}" @click.outside="open=false">
+        <button type="button" class="scope-switch-btn" @click="open=!open">
+          @if(isset($project))
+            <span class="crumb-part">{{ $currentCountry->name ?? '' }}</span>
+            <span class="sep">&rsaquo;</span>
+            <span class="crumb-part">{{ $project->name }}</span>
+          @else
+            <span>{{ __('选择项目') }}</span>
+          @endif
+          <span class="chev">&#9662;</span>
+        </button>
+        <div class="scope-menu" x-show="open" x-cloak>
+          @forelse($countries as $country)
+            <div class="scope-menu-group">
+              <div class="scope-menu-label">{{ $country->name }}</div>
+              @forelse($country->projects as $p)
+                <a href="{{ route('project.show', $p) }}" class="scope-menu-item {{ isset($project) && $p->id === $project->id ? 'active' : '' }}">{{ $p->name }}</a>
+              @empty
+                <span class="scope-menu-item" style="opacity:.5;cursor:default;">{{ __('暂无项目') }}</span>
+              @endforelse
+            </div>
+          @empty
+            <div class="scope-menu-item" style="opacity:.5;cursor:default;">{{ __('暂无可访问的项目') }}</div>
+          @endforelse
+        </div>
+      </div>
+    @endisset
   </div>
   <div class="topbar-right">
     <div class="lang-switch" style="font-size:11.5px;color:var(--navy-text-dim);display:flex;align-items:center;gap:4px;margin-right:4px;">
