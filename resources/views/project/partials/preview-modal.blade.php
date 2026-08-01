@@ -36,7 +36,7 @@
             </div>
           @else
             <div class="empty-state" style="padding:40px 20px;">
-              <p>该语言版本暂无可交互预览{{ $file->dwg_path ? '（转换失败或当前环境不支持）' : '' }}，可直接下载查看</p>
+              <p>该语言版本暂无可交互预览，可直接下载查看</p>
             </div>
           @endif
           <div class="file-chips" style="margin-top:10px;">
