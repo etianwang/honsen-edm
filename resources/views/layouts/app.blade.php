@@ -43,7 +43,7 @@ a{color:inherit;}
 .topbar{height:56px;background:var(--navy);color:var(--navy-text);
   display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--navy-line);}
 .topbar-left{display:flex;align-items:center;gap:16px;min-width:0;}
-.brand{display:flex;align-items:center;gap:10px;flex:none;}
+.brand{display:flex;align-items:center;gap:10px;flex:none;text-decoration:none;color:inherit;}
 .brand-mark{width:30px;height:30px;flex:none;}
 .brand-text .name{font-family:var(--font-display);font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;}
 .brand-text .sub{font-size:11px;color:var(--navy-text-dim);margin-top:1px;}
@@ -269,7 +269,7 @@ td.ops{white-space:nowrap;}
 
 <div class="topbar">
   <div class="topbar-left">
-    <div class="brand">
+    <a href="{{ route('home') }}" class="brand">
       <svg class="brand-mark" viewBox="0 0 32 32">
         <rect width="32" height="32" rx="7" fill="#3A2A18"/>
         <path d="M6 23.5 L13.5 9.5 L17.5 16.5 L21 10.5 L26.5 23.5 Z" fill="#C79A4B"/>
@@ -279,7 +279,7 @@ td.ops{white-space:nowrap;}
         <div class="name">{{ __('深圳弘盛图纸管理系统') }}</div>
         <div class="sub">Honsen Africa</div>
       </div>
-    </div>
+    </a>
 
     @isset($countries)
       @php
