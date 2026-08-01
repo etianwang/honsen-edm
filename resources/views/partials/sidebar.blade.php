@@ -5,6 +5,9 @@
         <button type="button" class="tree-toggle" @click="open=!open" aria-label="{{ __('展开或收起') }}">
           <span class="tree-toggle-icon" :class="{open:open}">&#9656;</span>
         </button>
+        <svg class="tree-icon team-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M1.5 3.5C1.5 2.94772 1.94772 2.5 2.5 2.5H6L7.5 4H13.5C14.0523 4 14.5 4.44772 14.5 5V12C14.5 12.5523 14.0523 13 13.5 13H2.5C1.94772 13 1.5 12.5523 1.5 12V3.5Z" fill="currentColor"/>
+        </svg>
         <a href="{{ route('project.team', [$project, $team]) }}" class="t-name">{{ $team->name }}</a>
         <span class="t-count">{{ $team->specialties->count() }} {{ __('专业') }}</span>
       </div>
@@ -15,6 +18,9 @@
               <button type="button" class="tree-toggle" @click="open=!open" aria-label="{{ __('展开或收起') }}">
                 <span class="tree-toggle-icon" :class="{open:open}">&#9656;</span>
               </button>
+              <svg class="tree-icon spec-icon" width="11" height="11" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M1.5 3.5C1.5 2.94772 1.94772 2.5 2.5 2.5H6L7.5 4H13.5C14.0523 4 14.5 4.44772 14.5 5V12C14.5 12.5523 14.0523 13 13.5 13H2.5C1.94772 13 1.5 12.5523 1.5 12V3.5Z" fill="currentColor"/>
+              </svg>
               <a href="{{ route('project.specialty', [$project, $specialty]) }}" class="s-name">{{ $specialty->name }}</a>
               <span class="s-count">{{ $specialty->subcategories->count() }}</span>
               @if($user->canManageContent())
@@ -25,6 +31,10 @@
             <div class="sub-list" x-show="open">
               @foreach($specialty->subcategories as $sub)
                 <a href="{{ route('subcategory.show', [$project, $sub]) }}" class="sub-row {{ (isset($subcategory) && $subcategory->id === $sub->id) ? 'selected' : '' }}">
+                  <svg class="tree-icon sub-icon" width="11" height="11" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M4 1.5H9.5L12.5 4.5V14.5H4V1.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                    <path d="M9.5 1.5V4.5H12.5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                  </svg>
                   <span class="sub-name">{{ $sub->name }}</span>
                   <span class="badge-count">{{ $sub->versions_count }}</span>
                 </a>
