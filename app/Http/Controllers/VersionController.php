@@ -130,10 +130,30 @@ class VersionController extends Controller
         $this->authorize('delete', $version);
 
         $subcategory = $version->subcategory;
+
+        $this->purgeFiles($version);
         $version->delete();
 
         AuditLog::record(Auth::id(), 'delete', 'version', $version->id, "删除版本「{$subcategory->name} · {$version->version_no}」");
 
         return back()->with('toast', __('已删除该版本'));
+    }
+
+    /**
+     * 删除版本时，把它名下所有 DWG/PDF/说明文件从 COS 上一并物理删除（不然只删数据库记录，
+     * COS 空间不会释放）。版本记录本身走软删除保留审计痕迹，但文件不需要再留着占地方。
+     */
+    private function purgeFiles(Version $version): void
+    {
+        foreach ($version->drawings as $drawing) {
+            $this->files->delete($drawing->file_path);
+            $this->files->delete($drawing->dxf_path);
+        }
+        VersionDrawing::where('version_id', $version->id)->delete();
+
+        foreach ($version->files as $file) {
+            $this->files->delete($file->doc_path);
+        }
+        VersionFile::where('version_id', $version->id)->delete();
     }
 }
