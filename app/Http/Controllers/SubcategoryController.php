@@ -66,7 +66,7 @@ class SubcategoryController extends Controller
 
         AuditLog::record(Auth::id(), 'create', 'subcategory', $subcategory->id, "创建细分类「{$subcategory->name}」");
 
-        return redirect()->route('subcategory.show', [$project, $subcategory])->with('toast', '已添加细分类');
+        return redirect()->route('subcategory.show', [$project, $subcategory])->with('toast', __('已添加细分类'));
     }
 
     public function update(Request $request, Subcategory $subcategory): RedirectResponse
@@ -82,7 +82,7 @@ class SubcategoryController extends Controller
 
         AuditLog::record(Auth::id(), 'rename', 'subcategory', $subcategory->id, "细分类「{$old}」重命名为「{$subcategory->name}」");
 
-        return back()->with('toast', '已重命名');
+        return back()->with('toast', __('已重命名'));
     }
 
     public function destroy(Request $request, Subcategory $subcategory): RedirectResponse
@@ -92,7 +92,7 @@ class SubcategoryController extends Controller
         $request->validate(['password' => ['required', 'string']]);
 
         if (! Hash::check($request->input('password'), Auth::user()->password)) {
-            return back()->withErrors(['password' => '密码错误，请重试']);
+            return back()->withErrors(['password' => __('密码错误，请重试')]);
         }
 
         $versionCount = $subcategory->versions()->count();
@@ -102,6 +102,6 @@ class SubcategoryController extends Controller
 
         AuditLog::record(Auth::id(), 'delete', 'subcategory', $subcategory->id, "删除细分类「{$subcategory->name}」，影响 {$versionCount} 条变更记录");
 
-        return redirect()->route('project.show', $project)->with('toast', '已删除细分类');
+        return redirect()->route('project.show', $project)->with('toast', __('已删除细分类'));
     }
 }

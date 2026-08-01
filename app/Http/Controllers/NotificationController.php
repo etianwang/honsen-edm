@@ -32,6 +32,6 @@ class NotificationController extends Controller
     {
         Auth::user()->unreadNotifications->markAsRead();
 
-        return back()->with('toast', '已全部标记为已读');
+        return back()->with('toast', __('已全部标记为已读'));
     }
 }

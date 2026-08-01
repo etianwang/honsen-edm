@@ -30,7 +30,7 @@ class ProfileController extends Controller
 
         if (! empty($data['new_password'])) {
             if (empty($data['current_password']) || ! Hash::check($data['current_password'], $user->password)) {
-                return back()->withErrors(['current_password' => '当前密码不正确'])->withInput();
+                return back()->withErrors(['current_password' => __('当前密码不正确')])->withInput();
             }
 
             $user->password = Hash::make($data['new_password']);
@@ -38,6 +38,6 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return back()->with('toast', '个人信息已更新');
+        return back()->with('toast', __('个人信息已更新'));
     }
 }

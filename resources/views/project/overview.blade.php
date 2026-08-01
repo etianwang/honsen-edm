@@ -1,24 +1,24 @@
 @extends('layouts.app')
-@section('title', $project->name.' · 总览')
+@section('title', $project->name.' · '.__('总览'))
 @section('content')
 <div class="shell">
   @include('partials.sidebar')
 
   <div class="main">
     <div class="main-inner">
-      <h1 class="page-title">总览</h1>
-      <p class="page-sub">Honsen Africa · {{ $project->name }} 图纸变更总览</p>
+      <h1 class="page-title">{{ __('总览') }}</h1>
+      <p class="page-sub">Honsen Africa · {{ $project->name }} {{ __('图纸变更总览') }}</p>
 
       <div class="stat-grid">
-        <div class="stat-card"><div class="label">图纸分类总数</div><div class="value">{{ $stats['subcategories'] }}</div></div>
-        <div class="stat-card"><div class="label">累计变更版本</div><div class="value">{{ $stats['versions'] }}</div></div>
-        <div class="stat-card"><div class="label">本月新增变更</div><div class="value">{{ $stats['this_month'] }}</div></div>
-        <div class="stat-card"><div class="label">含外发语言版本</div><div class="value">{{ $stats['external'] }}</div></div>
+        <div class="stat-card"><div class="label">{{ __('图纸分类总数') }}</div><div class="value">{{ $stats['subcategories'] }}</div></div>
+        <div class="stat-card"><div class="label">{{ __('累计变更版本') }}</div><div class="value">{{ $stats['versions'] }}</div></div>
+        <div class="stat-card"><div class="label">{{ __('本月新增变更') }}</div><div class="value">{{ $stats['this_month'] }}</div></div>
+        <div class="stat-card"><div class="label">{{ __('含外发语言版本') }}</div><div class="value">{{ $stats['external'] }}</div></div>
       </div>
 
-      <h2 class="section-title">最新变更</h2>
+      <h2 class="section-title">{{ __('最新变更') }}</h2>
       <div class="chip-row">
-        <a href="{{ route('project.show', $project) }}" class="chip {{ request('team') ? '' : 'active' }}">全部</a>
+        <a href="{{ route('project.show', $project) }}" class="chip {{ request('team') ? '' : 'active' }}">{{ __('全部') }}</a>
         @foreach($tree as $team)
           <a href="{{ route('project.show', $project) }}?team={{ $team->id }}" class="chip {{ request('team') == $team->id ? 'active' : '' }}">{{ $team->name }}</a>
         @endforeach
@@ -47,7 +47,7 @@
           </div>
         </a>
       @empty
-        <div class="empty-state"><p>该团队暂无变更记录</p></div>
+        <div class="empty-state"><p>{{ __('该团队暂无变更记录') }}</p></div>
       @endforelse
     </div>
   </div>

@@ -51,7 +51,11 @@ class VersionFileController extends Controller
         $action = $isReplace ? 'replace_file' : 'create';
         AuditLog::record(Auth::id(), $action, 'version_file', $version->id, ($isReplace ? '替换' : '上传')."「{$subcategory->name} · {$version->version_no}」的{$label}说明文件");
 
-        return back()->with('toast', $isReplace ? "已替换{$label}说明文件" : "已上传{$label}说明文件");
+        $translatedLabel = __($label);
+
+        return back()->with('toast', $isReplace
+            ? __('已替换:label说明文件', ['label' => $translatedLabel])
+            : __('已上传:label说明文件', ['label' => $translatedLabel]));
     }
 
     public function destroy(Version $version, string $language): RedirectResponse
@@ -67,7 +71,7 @@ class VersionFileController extends Controller
         $label = ['zh' => '中文', 'fr' => '法语', 'en' => '英语'][$language];
         AuditLog::record(Auth::id(), 'delete', 'version_file', $version->id, "移除「{$version->subcategory->name} · {$version->version_no}」的{$label}说明文件");
 
-        return back()->with('toast', "已移除{$label}说明文件");
+        return back()->with('toast', __('已移除:label说明文件', ['label' => __($label)]));
     }
 
     public function download(Version $version, string $language): StreamedResponse|RedirectResponse

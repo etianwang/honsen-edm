@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ app()->getLocale() === 'fr' ? 'fr' : 'zh-CN' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>@yield('title', '深圳弘盛图纸管理系统')</title>
+<title>@yield('title', __('深圳弘盛图纸管理系统'))</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
@@ -246,13 +246,13 @@ td.ops{white-space:nowrap;}
   @isset($countries)
   <div class="scope-bar">
     <div class="scope-group">
-      <span class="scope-label">国家</span>
+      <span class="scope-label">{{ __('国家') }}</span>
       <div class="scope-tabs">
         @foreach($countries as $country)
           @if($country->projects->isNotEmpty())
             <a href="{{ route('project.show', $country->projects->first()) }}" class="scope-tab {{ isset($project) && $project->country_id === $country->id ? 'active' : '' }}">{{ $country->name }}</a>
           @else
-            <span class="scope-tab" style="opacity:.5;cursor:default;" title="这个国家下还没有项目">{{ $country->name }}</span>
+            <span class="scope-tab" style="opacity:.5;cursor:default;" title="{{ __('这个国家下还没有项目') }}">{{ $country->name }}</span>
           @endif
         @endforeach
       </div>
@@ -260,7 +260,7 @@ td.ops{white-space:nowrap;}
     @if(isset($project))
     <div class="scope-divider"></div>
     <div class="scope-group">
-      <span class="scope-label">项目</span>
+      <span class="scope-label">{{ __('项目') }}</span>
       <div class="scope-tabs">
         @foreach($countries as $country)
           @if($country->id === $project->country_id)
@@ -283,30 +283,35 @@ td.ops{white-space:nowrap;}
       <circle cx="13" cy="10" r="1.4" fill="#F1EADB"/>
     </svg>
     <div class="brand-text">
-      <div class="name">深圳弘盛图纸管理系统</div>
+      <div class="name">{{ __('深圳弘盛图纸管理系统') }}</div>
       <div class="sub">Honsen Africa @isset($project) &middot; {{ $project->name }} @endisset</div>
     </div>
   </div>
   <div class="topbar-right">
+    <div class="lang-switch" style="font-size:11.5px;color:var(--navy-text-dim);display:flex;align-items:center;gap:4px;margin-right:4px;">
+      <a href="{{ route('language.switch', 'zh_CN') }}" style="color:{{ app()->getLocale() === 'zh_CN' ? 'var(--navy-text)' : 'var(--navy-text-dim)' }};text-decoration:none;font-weight:{{ app()->getLocale() === 'zh_CN' ? '600' : '400' }};">中文</a>
+      <span>·</span>
+      <a href="{{ route('language.switch', 'fr') }}" style="color:{{ app()->getLocale() === 'fr' ? 'var(--navy-text)' : 'var(--navy-text-dim)' }};text-decoration:none;font-weight:{{ app()->getLocale() === 'fr' ? '600' : '400' }};">Français</a>
+    </div>
     @if($user->isAdminTier())
-      <a href="{{ route('admin.index') }}" class="btn btn-sm" style="border-color:var(--navy-line);color:var(--navy-text);background:transparent;">进入后台</a>
+      <a href="{{ route('admin.index') }}" class="btn btn-sm" style="border-color:var(--navy-line);color:var(--navy-text);background:transparent;">{{ __('进入后台') }}</a>
     @endif
     <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-ghost" style="color:var(--navy-text);position:relative;">
-      通知
+      {{ __('通知') }}
       @if(($unreadNotificationCount ?? 0) > 0)
         <span style="background:var(--accent);color:#fff;border-radius:999px;font-size:10px;padding:1px 6px;margin-left:4px;">{{ $unreadNotificationCount }}</span>
       @endif
     </a>
-    <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-ghost" style="color:var(--navy-text);">个人设置</a>
+    <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-ghost" style="color:var(--navy-text);">{{ __('个人设置') }}</a>
     <div class="user-chip">
       <div class="user-avatar">{{ mb_substr($user->name, 0, 1) }}</div>
       <div>
         <div class="u-name">{{ $user->name }}</div>
-        <div class="u-role">{{ \App\Models\User::ROLE_LABELS[$user->role] }}</div>
+        <div class="u-role">{{ __(\App\Models\User::ROLE_LABELS[$user->role]) }}</div>
       </div>
       <form method="POST" action="{{ route('logout') }}" style="margin-left:8px;">
         @csrf
-        <button type="submit" class="btn btn-sm btn-ghost" style="color:var(--navy-text);">退出</button>
+        <button type="submit" class="btn btn-sm btn-ghost" style="color:var(--navy-text);">{{ __('退出') }}</button>
       </form>
     </div>
   </div>
@@ -322,6 +327,17 @@ td.ops{white-space:nowrap;}
 <div id="upload-queue" class="upload-queue"></div>
 
 <script>
+const HONSEN_UPLOAD_LABELS = {
+  uploading: @json(__('上传中')),
+  processing: @json(__('处理中…')),
+  timeout: @json(__('超时')),
+  timeoutMsg: @json(__('服务器处理时间过长，图纸可能仍在后台转换中，请稍后刷新页面查看是否已发布，避免重复提交。')),
+  done: @json(__('完成')),
+  failed: @json(__('失败')),
+  failedMsg: @json(__('上传失败，请重试')),
+  networkError: @json(__('网络错误')),
+};
+
 function honsenAsyncUpload(form) {
   const modal = form.closest('.overlay');
   if (modal) modal.style.display = 'none';
@@ -331,7 +347,7 @@ function honsenAsyncUpload(form) {
   item.className = 'upload-item';
   item.innerHTML = '<div class="ui-top"><span class="ui-label"></span><span class="ui-pct">0%</span></div>'
     + '<div class="ui-bar"><div class="ui-bar-fill"></div></div>';
-  item.querySelector('.ui-label').textContent = form.dataset.uploadLabel || '上传中';
+  item.querySelector('.ui-label').textContent = form.dataset.uploadLabel || HONSEN_UPLOAD_LABELS.uploading;
   queue.appendChild(item);
   queue.style.display = 'flex';
 
@@ -347,7 +363,7 @@ function honsenAsyncUpload(form) {
     if (ev.lengthComputable) {
       const p = Math.round((ev.loaded / ev.total) * 100);
       fill.style.width = p + '%';
-      pct.textContent = p < 100 ? (p + '%') : '处理中…';
+      pct.textContent = p < 100 ? (p + '%') : HONSEN_UPLOAD_LABELS.processing;
       if (p >= 100) item.classList.add('ui-processing');
     }
   });
@@ -355,10 +371,10 @@ function honsenAsyncUpload(form) {
   xhr.ontimeout = function () {
     item.classList.remove('ui-processing');
     item.classList.add('ui-error');
-    pct.textContent = '超时';
+    pct.textContent = HONSEN_UPLOAD_LABELS.timeout;
     const err = document.createElement('div');
     err.className = 'ui-err-msg';
-    err.textContent = '服务器处理时间过长，图纸可能仍在后台转换中，请稍后刷新页面查看是否已发布，避免重复提交。';
+    err.textContent = HONSEN_UPLOAD_LABELS.timeoutMsg;
     item.appendChild(err);
   };
 
@@ -366,15 +382,15 @@ function honsenAsyncUpload(form) {
     item.classList.remove('ui-processing');
     if (xhr.status >= 200 && xhr.status < 300) {
       fill.style.width = '100%';
-      pct.textContent = '完成';
+      pct.textContent = HONSEN_UPLOAD_LABELS.done;
       item.classList.add('ui-done');
       setTimeout(function () {
         window.location.href = xhr.responseURL || window.location.href;
       }, 500);
     } else {
       item.classList.add('ui-error');
-      pct.textContent = '失败';
-      let msg = '上传失败，请重试';
+      pct.textContent = HONSEN_UPLOAD_LABELS.failed;
+      let msg = HONSEN_UPLOAD_LABELS.failedMsg;
       try {
         const data = JSON.parse(xhr.responseText);
         if (data.errors) msg = Object.values(data.errors).flat().join('；');
@@ -394,7 +410,7 @@ function honsenAsyncUpload(form) {
   xhr.onerror = function () {
     item.classList.remove('ui-processing');
     item.classList.add('ui-error');
-    pct.textContent = '网络错误';
+    pct.textContent = HONSEN_UPLOAD_LABELS.networkError;
     setTimeout(function () {
       item.remove();
       if (!queue.children.length) queue.style.display = 'none';

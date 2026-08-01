@@ -87,7 +87,7 @@ class VersionController extends Controller
 
         return redirect()
             ->route('subcategory.show', [$subcategory->project_id, $subcategory])
-            ->with('toast', '变更已发布');
+            ->with('toast', __('变更已发布'));
     }
 
     private function storeDrawing(\Illuminate\Http\UploadedFile $file, string $dir, string $lang, string $kind, int $versionId): VersionDrawing
@@ -134,6 +134,6 @@ class VersionController extends Controller
 
         AuditLog::record(Auth::id(), 'delete', 'version', $version->id, "删除版本「{$subcategory->name} · {$version->version_no}」");
 
-        return back()->with('toast', '已删除该版本');
+        return back()->with('toast', __('已删除该版本'));
     }
 }

@@ -1,12 +1,12 @@
 @php
-  $langLabel = ['zh' => '中文', 'fr' => '法语', 'en' => '英语'];
+  $langLabel = ['zh' => __('中文'), 'fr' => __('法语'), 'en' => __('英语')];
   $availableLangs = collect(['zh', 'fr', 'en'])->intersect($version->availableLanguages())->values();
   $firstLang = $availableLangs->first();
 @endphp
 <div id="preview-modal-{{ $version->id }}" class="overlay" style="display:none;">
   <div class="modal wide">
     <div class="modal-head">
-      <h3>图纸预览 · {{ $version->version_no }}</h3>
+      <h3>{{ __('图纸预览') }} · {{ $version->version_no }}</h3>
       <button type="button" class="modal-close" onclick="document.getElementById('preview-modal-{{ $version->id }}').style.display='none'">&times;</button>
     </div>
     <div class="modal-body">
@@ -41,7 +41,7 @@
             <iframe id="pdf-frame-{{ $version->id }}-{{ $lang }}" src="{{ route('version-drawing.preview', $firstPdf) }}" style="width:100%;height:520px;border:1px solid var(--border);border-radius:9px;background:#fff;"></iframe>
           @else
             <div class="empty-state" style="padding:40px 20px;">
-              <p>暂无图纸预览，可直接下载 DWG / 说明文件查看</p>
+              <p>{{ __('暂无图纸预览，可直接下载 DWG / 说明文件查看') }}</p>
             </div>
           @endif
 

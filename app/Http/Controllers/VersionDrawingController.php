@@ -58,7 +58,7 @@ class VersionDrawingController extends Controller
         $count = count($request->file('files'));
         AuditLog::record(Auth::id(), 'create', 'version_drawing', $version->id, "为「{$subcategory->name} · {$version->version_no}」{$label}追加 {$count} 份 {$kindLabel} 文件");
 
-        return back()->with('toast', "已追加 {$count} 份{$kindLabel}文件");
+        return back()->with('toast', __('已追加 :count 份:kind文件', ['count' => $count, 'kind' => $kindLabel]));
     }
 
     public function destroy(VersionDrawing $drawing): RedirectResponse
@@ -73,7 +73,7 @@ class VersionDrawingController extends Controller
                 ->exists();
 
             if (! $hasOtherDwg) {
-                return back()->withErrors(['drawing' => '中文至少需要保留一份 DWG 图纸，不能全部删除']);
+                return back()->withErrors(['drawing' => __('中文至少需要保留一份 DWG 图纸，不能全部删除')]);
             }
         }
 
@@ -89,7 +89,7 @@ class VersionDrawingController extends Controller
 
         AuditLog::record(Auth::id(), 'delete', 'version_drawing', $version->id, "删除「{$subcategory->name} · {$version->version_no}」{$label}的{$kindLabel}文件「{$filename}」");
 
-        return back()->with('toast', "已删除 {$filename}");
+        return back()->with('toast', __('已删除 :filename', ['filename' => $filename]));
     }
 
     public function download(VersionDrawing $drawing): StreamedResponse|RedirectResponse
