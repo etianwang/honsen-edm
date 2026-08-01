@@ -67,7 +67,7 @@ a{color:inherit;}
 .user-chip .u-name{font-size:12.5px;color:var(--navy-text);}
 .user-chip .u-role{font-size:10.5px;color:var(--navy-text-dim);}
 
-.shell{display:flex;min-height:calc(100vh - 56px);}
+.shell{display:flex;}
 
 .page-footer{margin-top:32px;padding-top:14px;text-align:left;font-size:11px;color:var(--muted);border-top:1px solid var(--border);}
 .page-footer a{color:var(--muted);text-decoration:none;}
