@@ -46,7 +46,6 @@
             <span class="date-mono">{{ $latest->publish_date->format('Y-m-d') }} {{ __('发布') }}</span>
             <div class="spacer"></div>
             <div class="ops-row">
-              <button type="button" class="icon-btn" title="{{ __('预览') }}" onclick="document.getElementById('preview-modal-{{ $latest->id }}').style.display='flex'">👁</button>
               @if($user->canManageContent())
                 <form method="POST" action="{{ route('version.destroy', $latest) }}" onsubmit="return confirm('{{ __('确定删除该版本记录（含所有语言文件）？此操作不可撤销。') }}')">
                   @csrf @method('DELETE')
@@ -91,7 +90,6 @@
         @foreach(['zh','fr','en'] as $lang)
           @include('project.partials.lang-modal', ['version' => $latest, 'lang' => $lang, 'langLabel' => $langLabel])
         @endforeach
-        @include('project.partials.preview-modal', ['version' => $latest])
 
         <h2 class="section-title">{{ __('历史版本') }}</h2>
         @if($history->isEmpty())
@@ -116,8 +114,6 @@
                   <td class="mono">{{ $v->uploader?->name ?? '—' }}</td>
                   <td class="ops">
                     <div class="ops-row">
-                      <button type="button" class="icon-btn" title="{{ __('预览') }}" onclick="document.getElementById('preview-modal-{{ $v->id }}').style.display='flex'">👁</button>
-                      @include('project.partials.preview-modal', ['version' => $v])
                       @if($vAvailableLangs->contains('zh'))
                         <a class="icon-btn" title="{{ __('下载中文全部文件（ZIP）') }}" href="{{ route('version.language-zip', [$v, 'zh']) }}">↓</a>
                       @endif
