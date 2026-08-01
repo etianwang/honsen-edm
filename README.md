@@ -259,7 +259,29 @@ sudo chmod -R 775 storage bootstrap/cache
 
 （`www` 是宝塔默认的运行用户，如果你的面板配置了别的运行用户，换成对应的名字。以后每次改了 `.env` 或者路由/配置，都要重新跑一次 `config:cache`/`route:cache`，不然改动不会生效。）
 
-### 10. 宝塔面板：网站 + HTTPS
+### 10. 队列 worker（DWG→DXF 后台转换必需）
+
+上传变更时，DWG→DXF 的转换不再同步等待（单个文件最多可能耗时 60 秒），改成丢进队列（`QUEUE_CONNECTION=database`，`.env` 里已经配好）异步处理。**这意味着必须有一个常驻进程在跑 `php artisan queue:work`，否则任务会一直堆在数据库的 `jobs` 表里，图纸预览会永远停在"转换中"，不会有任何报错提示**——这一点很容易漏掉，务必按下面配置。
+
+宝塔面板 → **软件商店** → 搜索安装 **Supervisor 管理器**，装好后：
+
+1. 打开 Supervisor 管理器 → **添加守护进程**
+2. 名称：`honsen-edm-queue`
+3. 启动用户：`www`（跟网站运行用户一致）
+4. 运行目录：`/www/wwwroot/honsen-drawing`
+5. 启动命令：
+   ```bash
+   php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+   ```
+   （`--max-time=3600` 让进程每小时自动重启一次，避免 PHP 常驻进程长期运行后内存/连接状态累积问题；Supervisor 会在它退出后自动拉起新的，不影响任务处理）
+6. 进程数：1 个就够（这是内部工具量级，不需要并发 worker）
+7. 保存并启动，在 Supervisor 管理器里确认状态是"运行中"
+
+验证：随便上传一次带 DWG 的变更，几秒内 `jobs` 表里应该能看到一条记录被取走处理；1～2 分钟内该语言版本的"转换中"应该会变成可以在线预览。如果一直不变，先看 Supervisor 管理器里进程有没有报错退出，再看 `storage/logs/laravel.log`。
+
+以后每次 `git pull` 更新代码后，如果改动涉及 `app/Jobs/`，记得在 Supervisor 管理器里重启一下这个守护进程，让它跑最新代码（跟 PHP-FPM 需要重启同理）。
+
+### 11. 宝塔面板：网站 + HTTPS
 
 1. **网站 → 站点设置 → 网站目录**：把根目录改成 `/www/wwwroot/honsen-drawing/public`（**注意是 `public` 子目录，不是项目根目录**——这一步最容易出错，指错了会导致 `.env`、`vendor/` 这些敏感文件能被直接下载）
 2. **网站 → 设置 → PHP 版本**：选第 2 步装好的 PHP 8.4
@@ -271,11 +293,11 @@ sudo chmod -R 775 storage bootstrap/cache
    ```
 4. **网站 → 设置 → SSL**：申请 Let's Encrypt 免费证书，一键开启，并且勾选"强制 HTTPS"
 
-### 11. 防火墙
+### 12. 防火墙
 
 宝塔面板 → **安全**：只放行 80、443（网站）和你自己登录用的 SSH 端口；PostgreSQL 只监听本机不用额外开端口；宝塔面板自己的端口（默认 8888）建议只允许你自己的公网 IP 访问。
 
-### 12. 上线前最后确认一遍
+### 13. 上线前最后确认一遍
 
 对照 [验收清单.md](docs/验收清单.md) 把关键流程（登录、上传变更、语言补充、DWG 预览、权限隔离、通知）手动过一遍，再对照下面这份检查表：
 
@@ -285,6 +307,7 @@ sudo chmod -R 775 storage bootstrap/cache
 - [ ] HTTPS 证书生效，且强制跳转
 - [ ] `FILESYSTEM_DISK=cos` 且已经用真实密钥验证过上传/下载
 - [ ] ODA File Converter 装好，随便传一张真实 DWG 测一下能不能在线看图
+- [ ] Supervisor 里 `honsen-edm-queue` 守护进程状态正常，DWG 转换任务能被正常处理（不会一直卡在"转换中"）
 - [ ] `storage/` 和 `bootstrap/cache/` 目录属主和权限正确，不然日志写不进去、上传会报 500
 
 ### 后续更新代码怎么发布

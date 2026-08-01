@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ConvertVersionFileDxf;
 use App\Models\AuditLog;
 use App\Models\Subcategory;
 use App\Models\User;
@@ -9,7 +10,6 @@ use App\Models\Version;
 use App\Models\VersionFile;
 use App\Notifications\NewVersionPublished;
 use App\Services\CosFileService;
-use App\Services\DwgConverter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Notification;
 
 class VersionController extends Controller
 {
-    public function __construct(protected CosFileService $files, protected DwgConverter $dwgConverter) {}
+    public function __construct(protected CosFileService $files) {}
 
     public function store(Request $request, Subcategory $subcategory): RedirectResponse
     {
@@ -39,7 +39,9 @@ class VersionController extends Controller
             'en_doc' => array_merge(['nullable'], $docRule),
         ]);
 
-        $version = DB::transaction(function () use ($data, $subcategory, $request) {
+        $pendingDxfConversions = [];
+
+        $version = DB::transaction(function () use ($data, $subcategory, $request, &$pendingDxfConversions) {
             $version = Version::create([
                 'subcategory_id' => $subcategory->id,
                 'version_no' => $data['version_no'],
@@ -60,22 +62,31 @@ class VersionController extends Controller
 
                 $dwgResult = $dwg ? $this->files->store($dwg, "{$dir}/{$lang}") : null;
                 $docResult = $doc ? $this->files->store($doc, "{$dir}/{$lang}") : null;
-                $dxfResult = $dwg ? $this->dwgConverter->convertAndStore($this->files, $dwg, "{$dir}/{$lang}") : null;
 
-                VersionFile::create([
+                $versionFile = VersionFile::create([
                     'version_id' => $version->id,
                     'language' => $lang,
                     'dwg_path' => $dwgResult['path'] ?? null,
                     'dwg_size' => $dwgResult['size'] ?? null,
-                    'dxf_path' => $dxfResult['path'] ?? null,
+                    'dxf_status' => $dwg ? VersionFile::DXF_PENDING : null,
                     'doc_path' => $docResult['path'] ?? null,
                     'doc_size' => $docResult['size'] ?? null,
                     'uploaded_by' => Auth::id(),
                 ]);
+
+                if ($dwg) {
+                    $pendingDxfConversions[] = $versionFile->id;
+                }
             }
 
             return $version;
         });
+
+        // DWG→DXF 转换放到后台异步跑（单个文件最多可能耗时 60 秒），变更记录本身立即可见，
+        // 交互式预览转换完之前前端显示"转换中"，不阻塞发布流程
+        foreach ($pendingDxfConversions as $versionFileId) {
+            ConvertVersionFileDxf::dispatch($versionFileId);
+        }
 
         AuditLog::record(Auth::id(), 'create', 'version', $version->id, "上传变更「{$subcategory->name} · {$version->version_no}」");
 

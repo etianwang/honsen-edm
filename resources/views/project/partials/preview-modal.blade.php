@@ -29,9 +29,14 @@
               <div class="dxf-status" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--navy-text-dim);font-size:12.5px;">正在加载图纸…</div>
             </div>
             <p class="hint" style="margin-top:8px;">鼠标滚轮缩放，拖拽平移。这是自动从 DWG 转换出的预览，如需精确编辑请下载原始 DWG 文件。</p>
+          @elseif($file->isDxfConverting())
+            <div class="empty-state" style="padding:40px 20px;">
+              <p>图纸正在后台转换为可交互预览格式，一般 1～2 分钟内完成，请稍后刷新本页面查看</p>
+              <p class="hint" style="margin-top:6px;">转换期间不影响下载原始 DWG 文件</p>
+            </div>
           @else
             <div class="empty-state" style="padding:40px 20px;">
-              <p>该语言版本暂无可交互预览{{ $file->dwg_path ? '（转换尚未生成或失败）' : '' }}，可直接下载查看</p>
+              <p>该语言版本暂无可交互预览{{ $file->dwg_path ? '（转换失败或当前环境不支持）' : '' }}，可直接下载查看</p>
             </div>
           @endif
           <div class="file-chips" style="margin-top:10px;">

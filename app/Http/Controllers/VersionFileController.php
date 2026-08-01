@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ConvertVersionFileDxf;
 use App\Models\AuditLog;
 use App\Models\Version;
 use App\Models\VersionFile;
 use App\Services\CosFileService;
-use App\Services\DwgConverter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VersionFileController extends Controller
 {
-    public function __construct(protected CosFileService $files, protected DwgConverter $dwgConverter) {}
+    public function __construct(protected CosFileService $files) {}
 
     public function store(Request $request, Version $version, string $language): RedirectResponse
     {
@@ -39,6 +39,7 @@ class VersionFileController extends Controller
         $dwgPath = $existing?->dwg_path;
         $dwgSize = $existing?->dwg_size;
         $dxfPath = $existing?->dxf_path;
+        $dxfStatus = $existing?->dxf_status;
         $docPath = $existing?->doc_path;
         $docSize = $existing?->doc_size;
 
@@ -48,8 +49,8 @@ class VersionFileController extends Controller
             $dwgSize = $result['size'];
 
             $this->files->delete($existing?->dxf_path);
-            $dxfResult = $this->dwgConverter->convertAndStore($this->files, $dwg, $dir);
-            $dxfPath = $dxfResult['path'] ?? null;
+            $dxfPath = null;
+            $dxfStatus = VersionFile::DXF_PENDING;
         }
 
         if ($doc = $request->file('doc')) {
@@ -58,17 +59,22 @@ class VersionFileController extends Controller
             $docSize = $result['size'];
         }
 
-        VersionFile::updateOrCreate(
+        $versionFile = VersionFile::updateOrCreate(
             ['version_id' => $version->id, 'language' => $language],
             [
                 'dwg_path' => $dwgPath,
                 'dwg_size' => $dwgSize,
                 'dxf_path' => $dxfPath,
+                'dxf_status' => $dxfStatus,
                 'doc_path' => $docPath,
                 'doc_size' => $docSize,
                 'uploaded_by' => Auth::id(),
             ]
         );
+
+        if ($dwg) {
+            ConvertVersionFileDxf::dispatch($versionFile->id);
+        }
 
         $label = ['zh' => '中文', 'fr' => '法语', 'en' => '英语'][$language];
         $action = $isReplace ? 'replace_file' : 'create';
