@@ -95,29 +95,29 @@ a{color:inherit;}
 .team-block{margin-bottom:2px;}
 .team-header{display:flex;align-items:center;gap:6px;padding:9px 14px;user-select:none;}
 .team-header:hover{background:rgba(0,0,0,.22);}
-.team-header .t-name{font-family:var(--font-display);font-weight:700;font-size:16px;letter-spacing:.05em;text-transform:uppercase;color:#F8F2DE;text-shadow:0 1px 3px rgba(0,0,0,.6);text-decoration:none;flex:1;}
-.team-header .t-count{font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:#DDD1AC;text-shadow:0 1px 2px rgba(0,0,0,.5);}
+.team-header .t-name{font-family:var(--font-display);font-weight:700;font-size:14.5px;letter-spacing:.05em;text-transform:uppercase;color:#F8F2DE;text-shadow:0 1px 1px rgba(0,0,0,.75);text-decoration:none;flex:1;}
+.team-header .t-count{font-family:var(--font-mono);font-size:12px;font-weight:600;color:#DDD1AC;text-shadow:0 1px 1px rgba(0,0,0,.65);}
 .tree-icon{flex:none;}
-.team-icon{color:#C79A4B;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
-.spec-icon{color:#B9AF97;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
+.team-icon{color:#C79A4B;filter:drop-shadow(0 1px 1px rgba(0,0,0,.65));}
+.spec-icon{color:#B9AF97;filter:drop-shadow(0 1px 1px rgba(0,0,0,.65));}
 .sub-icon{color:#9A8F76;}
 .spec-list{margin-left:23px;border-left:1px solid rgba(255,244,222,.14);}
 .spec-row{display:flex;align-items:center;gap:6px;padding:7px 14px 7px 12px;}
 .spec-row:hover{background:rgba(0,0,0,.22);}
-.spec-row .s-name{font-size:16.5px;font-weight:600;color:#F8F2DE;text-shadow:0 1px 3px rgba(0,0,0,.55);text-decoration:none;flex:1;}
-.spec-row .s-count{font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:#DDD1AC;text-shadow:0 1px 2px rgba(0,0,0,.5);}
+.spec-row .s-name{font-size:15px;font-weight:600;color:#F8F2DE;text-shadow:0 1px 1px rgba(0,0,0,.7);text-decoration:none;flex:1;}
+.spec-row .s-count{font-family:var(--font-mono);font-size:12px;font-weight:600;color:#DDD1AC;text-shadow:0 1px 1px rgba(0,0,0,.65);}
 .spec-add{flex:none;width:24px;height:24px;border:1px solid rgba(255,244,222,.3);border-radius:5px;background:rgba(0,0,0,.25);color:#D8CFB8;display:flex;align-items:center;justify-content:center;}
 .spec-add:hover{border-color:var(--accent-bg);color:var(--accent-bg);}
 .tree-toggle{flex:none;width:26px;height:26px;border:none;background:none;color:#F8F2DE;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
-.tree-toggle-icon{display:inline-block;font-size:20px;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.7);transition:transform .12s ease;}
+.tree-toggle-icon{display:inline-block;font-size:18px;line-height:1;text-shadow:0 1px 1px rgba(0,0,0,.8);transition:transform .12s ease;}
 .tree-toggle-icon.open{transform:rotate(90deg);}
 .sub-list{margin-left:19px;border-left:1px solid rgba(255,244,222,.1);}
-.sub-row{display:flex;align-items:center;gap:8px;padding:8px 14px 8px 40px;cursor:pointer;border-left:3px solid transparent;font-size:16.5px;font-weight:600;color:#F3EBD3;text-shadow:0 1px 2px rgba(0,0,0,.5);text-decoration:none;min-height:32px;box-sizing:border-box;}
+.sub-row{display:flex;align-items:center;gap:8px;padding:8px 14px 8px 40px;cursor:pointer;border-left:3px solid transparent;font-size:15px;font-weight:600;color:#F3EBD3;text-shadow:0 1px 1px rgba(0,0,0,.7);text-decoration:none;min-height:32px;box-sizing:border-box;}
 .sub-row:hover{background:rgba(0,0,0,.22);}
 .sub-row.selected{background:rgba(156,122,61,.4);color:#FFFAEC;text-shadow:0 1px 2px rgba(0,0,0,.45);border-left-color:var(--accent-bg);font-weight:700;box-shadow:inset 0 1px rgba(255,255,255,.1);}
 .sub-row.selected .sub-icon{color:#FFFAEC;}
 .sub-row .sub-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.badge-count{font-family:var(--font-mono);font-size:13px;font-weight:600;background:rgba(0,0,0,.4);color:#EFE6C9;padding:1px 6px;border-radius:999px;flex:none;}
+.badge-count{font-family:var(--font-mono);font-size:11.5px;font-weight:600;background:rgba(0,0,0,.4);color:#EFE6C9;padding:1px 6px;border-radius:999px;flex:none;}
 .sub-row.selected .badge-count{background:rgba(255,255,255,.14);color:#FBF4E2;}
 
 .main{flex:1;min-width:0;min-height:calc(100vh - 56px);box-sizing:border-box;padding:28px 32px 60px;display:flex;flex-direction:column;}
