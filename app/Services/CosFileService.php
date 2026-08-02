@@ -24,26 +24,74 @@ class CosFileService
     }
 
     /**
-     * $inline=true 时会在 COS 对象上设置 Content-Disposition: inline（比如 PDF 图纸），
-     * 让浏览器直接在 iframe 里展示，而不是触发下载。腾讯云 COS 这边预签名 URL 不支持临时
-     * 覆盖响应头（overtrue/qcloud-cos-client 的 getObjectSignedUrl 只签 sign 参数，我们传给
-     * temporaryUrl() 的 ResponseContentDisposition 选项会被静默忽略），所以只能在上传时把
-     * disposition 写进对象本身的元数据，之后每次访问都固定生效。
+     * 上传时就把 Content-Disposition（含原始文件名）写进对象元数据，下载/预览时才能
+     * 显示正确的文件名，而不是存储用的 UUID 文件名。腾讯云 COS 的预签名 URL 不支持
+     * 临时覆盖响应头（overtrue/qcloud-cos-client 的 getObjectSignedUrl 只签 sign 参数，
+     * 传给 temporaryUrl() 的 ResponseContentDisposition 选项会被静默忽略），所以只能
+     * 在上传时把 disposition 写进对象本身的元数据，之后每次访问都固定生效。
+     * $inline=true 用于 PDF 图纸想在浏览器里直接打开查看的场景。
      */
     public function store(UploadedFile $file, string $directory, bool $inline = false): array
     {
+        $originalName = $file->getClientOriginalName();
         $filename = Str::uuid()->toString().'.'.$file->getClientOriginalExtension();
-        $options = ['disk' => $this->disk];
-        if ($inline) {
-            $options['headers'] = ['Content-Disposition' => 'inline'];
-        }
-        $path = $file->storeAs($directory, $filename, $options);
+        $path = $file->storeAs($directory, $filename, [
+            'disk' => $this->disk,
+            'headers' => ['Content-Disposition' => $this->contentDispositionHeader($inline ? 'inline' : 'attachment', $originalName)],
+        ]);
 
         return [
             'path' => $path,
             'size' => $file->getSize(),
-            'original_name' => $file->getClientOriginalName(),
+            'original_name' => $originalName,
         ];
+    }
+
+    /**
+     * 存储路径用的是 UUID 文件名（避免中文/特殊字符路径问题、避免重名覆盖），
+     * 下载时要让浏览器看到原始文件名，只能靠 Content-Disposition 里的 filename。
+     * 同时给 ASCII 兜底（filename=）和 UTF-8 编码（filename*=，RFC 5987），
+     * 兼容不同浏览器对中文文件名的处理。
+     */
+    public function contentDispositionHeader(string $type, string $originalName): string
+    {
+        $ascii = preg_replace('/[^\x20-\x7E]/', '_', $originalName);
+        $ascii = str_replace('"', "'", $ascii);
+
+        return sprintf('%s; filename="%s"; filename*=UTF-8\'\'%s', $type, $ascii, rawurlencode($originalName));
+    }
+
+    /**
+     * 一次性维护/补救用：把已上传对象的 Content-Disposition 元数据重写为正确的原始文件名。
+     * 只对 COS 生效（本地磁盘的临时链接走 Laravel 自己的签名机制，不存在这个问题）。
+     * COS 预签名 URL 不支持临时覆盖响应头，只能用 CopyObject 重写对象元数据本身。
+     */
+    public function refreshContentDisposition(string $path, string $originalName, bool $inline = false): bool
+    {
+        if ($this->disk !== 'cos') {
+            return true;
+        }
+
+        $diskConfig = config('filesystems.disks.cos');
+        $source = sprintf(
+            '%s-%s.cos.%s.myqcloud.com/%s',
+            $diskConfig['bucket'],
+            $diskConfig['app_id'],
+            $diskConfig['region'],
+            ltrim($path, '/')
+        );
+
+        $client = Storage::disk('cos')->getAdapter()->getObjectClient();
+        $mimeType = Storage::disk('cos')->mimeType($path) ?: 'application/octet-stream';
+
+        $response = $client->copyObject($path, [
+            'x-cos-copy-source' => $source,
+            'x-cos-metadata-directive' => 'Replaced',
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => $this->contentDispositionHeader($inline ? 'inline' : 'attachment', $originalName),
+        ]);
+
+        return $response->isSuccessful();
     }
 
     /**
@@ -86,20 +134,13 @@ class CosFileService
     /**
      * 带有效期的签名下载 URL。本地磁盘没有真正的签名机制，退化为走后端中转的下载路由。
      *
-     * 注意：$downloadName 目前只在本地磁盘生效。COS 那边预签名 URL 不支持临时覆盖
-     * Content-Disposition（见 store() 的说明），下载文件名取决于上传时是否设置了
-     * 对象元数据，这里传的 ResponseContentDisposition 选项会被 SDK 静默忽略。
+     * 下载文件名不是靠这个 URL 决定的：COS 预签名 URL 不支持临时覆盖 Content-Disposition，
+     * 真正生效的是上传时写进对象元数据里的文件名（见 store() 的说明）。
      */
-    public function signedDownloadUrl(string $path, string $downloadName): string
+    public function signedDownloadUrl(string $path): string
     {
-        if ($this->disk === 'cos') {
-            return Storage::disk('cos')->temporaryUrl(
-                $path,
-                now()->addSeconds((int) config('services.cos.sign_url_ttl', 600))
-            );
-        }
-
-        // 本地磁盘用 Laravel 内置的签名临时链接，避免把 storage 目录设成公开可读
+        // 本地磁盘和 cos 磁盘目前都是同一套 temporaryUrl 调用；本地磁盘用 Laravel
+        // 内置的签名临时链接，避免把 storage 目录设成公开可读
         return Storage::disk($this->disk)->temporaryUrl(
             $path,
             now()->addSeconds((int) config('services.cos.sign_url_ttl', 600))

@@ -43,6 +43,7 @@ class VersionFileController extends Controller
             [
                 'doc_path' => $result['path'],
                 'doc_size' => $result['size'],
+                'original_name' => $result['original_name'],
                 'uploaded_by' => Auth::id(),
             ]
         );
@@ -81,6 +82,6 @@ class VersionFileController extends Controller
         $versionFile = $version->fileFor($language);
         abort_if(! $versionFile || ! $versionFile->doc_path, 404);
 
-        return redirect()->away($this->files->signedDownloadUrl($versionFile->doc_path, basename($versionFile->doc_path)));
+        return redirect()->away($this->files->signedDownloadUrl($versionFile->doc_path));
     }
 }

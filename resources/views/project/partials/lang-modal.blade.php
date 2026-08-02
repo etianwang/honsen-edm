@@ -80,7 +80,7 @@
       @if($docFile?->doc_path)
         <div class="spec-admin-row" style="padding:8px 0;">
           <div class="spec-admin-head" style="margin-bottom:0;">
-            <span class="sa-name" style="flex:none;font-family:var(--font-mono);font-size:12.5px;">{{ basename($docFile->doc_path) }}</span>
+            <span class="sa-name" style="flex:none;font-family:var(--font-mono);font-size:12.5px;">{{ $docFile->original_name ?: basename($docFile->doc_path) }}</span>
             <span style="font-size:11px;color:var(--muted);">{{ $formatSize($docFile->doc_size) }}</span>
             <div class="spacer"></div>
             <a class="icon-btn" style="width:32px;height:32px;" title="{{ __('下载') }}" href="{{ route('version-file.download', [$version, $lang]) }}">↓</a>

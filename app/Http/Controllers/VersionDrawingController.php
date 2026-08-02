@@ -96,10 +96,7 @@ class VersionDrawingController extends Controller
     {
         $this->authorize('view', $drawing->version);
 
-        return redirect()->away($this->files->signedDownloadUrl(
-            $drawing->file_path,
-            $drawing->original_name ?: basename($drawing->file_path)
-        ));
+        return redirect()->away($this->files->signedDownloadUrl($drawing->file_path));
     }
 
     /**
@@ -153,7 +150,7 @@ class VersionDrawingController extends Controller
             $addToZip($drawing->file_path, $drawing->original_name);
         }
         if ($docFile?->doc_path) {
-            $addToZip($docFile->doc_path, basename($docFile->doc_path));
+            $addToZip($docFile->doc_path, $docFile->original_name ?: basename($docFile->doc_path));
         }
 
         $zip->close();

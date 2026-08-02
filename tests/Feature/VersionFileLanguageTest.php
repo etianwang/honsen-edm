@@ -34,7 +34,7 @@ class VersionFileLanguageTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseCount('version_files', 1);
-        $this->assertDatabaseHas('version_files', ['version_id' => $version->id, 'language' => 'fr']);
+        $this->assertDatabaseHas('version_files', ['version_id' => $version->id, 'language' => 'fr', 'original_name' => 'note.docx']);
     }
 
     public function test_replacing_an_existing_doc_updates_the_same_row_instead_of_duplicating(): void
