@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -120,10 +121,30 @@ class CosFileService
         return $result;
     }
 
+    /**
+     * 尽力删除，不让调用方（比如批量清理一个版本名下所有文件的 purgeFiles()）因为
+     * 某一个文件删除失败就整个中断。COS 失败时腾讯云 SDK 抛的是它自己的异常类
+     * （Overtrue\CosClient\Exceptions\*），跟 Laravel FilesystemAdapter::delete() 内部
+     * 期待捕获的 League\Flysystem\UnableToDeleteFile 对不上，会直接冒泡，如果调用方
+     * 是在循环里删多个文件、后面还要做数据库清理，一次网络抖动就会导致状态卡在
+     * "COS 删了一半、数据库记录一个没删"——这里兜底捕获，记日志留痕，不往外抛，
+     * 保证数据库清理一定能继续做下去；真正删除失败的对象需要事后翻日志人工核实。
+     */
     public function delete(?string $path): void
     {
-        if ($path) {
+        if (! $path) {
+            return;
+        }
+
+        try {
             Storage::disk($this->disk)->delete($path);
+        } catch (\Throwable $e) {
+            Log::warning('COS 文件删除失败，需要人工核实是否有孤儿文件残留', [
+                'disk' => $this->disk,
+                'path' => $path,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
         }
     }
 
