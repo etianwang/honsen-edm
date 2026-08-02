@@ -67,7 +67,7 @@
               @endif
               @php($zhDoc = $latest->fileFor('zh'))
               @if($zhDoc?->doc_path)
-                <a class="file-chip" href="{{ route('version-file.download', [$latest, 'zh']) }}"><span class="fname">{{ basename($zhDoc->doc_path) }}</span></a>
+                <a class="file-chip" href="{{ route('version-file.download', [$latest, 'zh']) }}"><span class="fname">{{ $zhDoc->original_name ?: basename($zhDoc->doc_path) }}</span></a>
               @endif
             </div>
             @php($availableLangs = $latest->availableLanguages())

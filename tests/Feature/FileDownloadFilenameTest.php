@@ -42,6 +42,46 @@ class FileDownloadFilenameTest extends TestCase
         $this->assertDatabaseHas('version_drawings', ['version_id' => $version->id, 'original_name' => '电力干线方案.dwg']);
     }
 
+    /**
+     * 之前踩的坑：只在"追加/替换"这条支线（VersionFileController::store）记了 original_name，
+     * 漏了"发布变更"这条主干流程（VersionController::store）——用户平时发布新版本走的
+     * 正是这条主干路径，所以线上还是看不到正确文件名。这次把 zh/fr/en 三种语言、
+     * DWG/PDF/说明文件三种类型在主干发布流程里全部覆盖到。
+     */
+    public function test_publishing_a_version_stores_original_filenames_for_every_language_and_file_kind(): void
+    {
+        $project = $this->makeProject();
+        $specialty = $this->makeSpecialty();
+        $subcategory = $this->makeSubcategory($project, $specialty);
+        $designer = $this->makeUser(User::ROLE_DESIGNER, [$project], teams: [$specialty->team]);
+
+        $response = $this->actingAs($designer)->post("/subcategories/{$subcategory->id}/versions", [
+            'version_no' => 'V1',
+            'publish_date' => now()->toDateString(),
+            'description' => '三语言全量测试',
+            'zh_dwg' => [UploadedFile::fake()->create('中文图纸.dwg', 100)],
+            'zh_pdf' => [UploadedFile::fake()->create('中文图纸.pdf', 100)],
+            'zh_doc' => UploadedFile::fake()->create('中文说明.docx', 50),
+            'fr_dwg' => [UploadedFile::fake()->create('Plan francais.dwg', 100)],
+            'fr_pdf' => [UploadedFile::fake()->create('Plan francais.pdf', 100)],
+            'fr_doc' => UploadedFile::fake()->create('Note francaise.docx', 50),
+            'en_dwg' => [UploadedFile::fake()->create('English drawing.dwg', 100)],
+            'en_pdf' => [UploadedFile::fake()->create('English drawing.pdf', 100)],
+            'en_doc' => UploadedFile::fake()->create('English note.docx', 50),
+        ]);
+
+        $response->assertRedirect();
+
+        foreach (['zh' => '中文图纸', 'fr' => 'Plan francais', 'en' => 'English drawing'] as $lang => $stem) {
+            $this->assertDatabaseHas('version_drawings', ['language' => $lang, 'kind' => 'dwg', 'original_name' => "{$stem}.dwg"]);
+            $this->assertDatabaseHas('version_drawings', ['language' => $lang, 'kind' => 'pdf', 'original_name' => "{$stem}.pdf"]);
+        }
+
+        $this->assertDatabaseHas('version_files', ['language' => 'zh', 'original_name' => '中文说明.docx']);
+        $this->assertDatabaseHas('version_files', ['language' => 'fr', 'original_name' => 'Note francaise.docx']);
+        $this->assertDatabaseHas('version_files', ['language' => 'en', 'original_name' => 'English note.docx']);
+    }
+
     public function test_downloading_a_drawing_streams_with_the_original_filename_in_content_disposition(): void
     {
         $project = $this->makeProject();
@@ -64,5 +104,27 @@ class FileDownloadFilenameTest extends TestCase
         $response->assertOk();
         $response->assertHeader('Content-Disposition');
         $this->assertStringContainsString('Zone transfo Maj 050326.dwg', $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_downloading_a_description_document_streams_with_the_original_filename(): void
+    {
+        $project = $this->makeProject();
+        $specialty = $this->makeSpecialty();
+        $subcategory = $this->makeSubcategory($project, $specialty);
+        $version = $this->makeVersion($subcategory);
+        $designer = $this->makeUser(User::ROLE_DESIGNER, [$project], teams: [$specialty->team]);
+
+        Storage::disk('local')->put('fake/note.docx', 'doc-bytes');
+        \App\Models\VersionFile::create([
+            'version_id' => $version->id,
+            'language' => 'fr',
+            'doc_path' => 'fake/note.docx',
+            'original_name' => 'Note explicative francaise.docx',
+        ]);
+
+        $response = $this->actingAs($designer)->get("/versions/{$version->id}/files/fr/download");
+
+        $response->assertOk();
+        $this->assertStringContainsString('Note explicative francaise.docx', $response->headers->get('Content-Disposition'));
     }
 }

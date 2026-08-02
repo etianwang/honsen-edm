@@ -73,6 +73,7 @@ class VersionController extends Controller
                         'language' => $lang,
                         'doc_path' => $docResult['path'],
                         'doc_size' => $docResult['size'],
+                        'original_name' => $docResult['original_name'],
                         'uploaded_by' => Auth::id(),
                     ]);
                 }

@@ -54,7 +54,7 @@
             @endforeach
             @php($docFile = $version->fileFor($lang))
             @if($docFile?->doc_path)
-              <a class="file-chip" href="{{ route('version-file.download', [$version, $lang]) }}"><span class="fname">{{ basename($docFile->doc_path) }}</span></a>
+              <a class="file-chip" href="{{ route('version-file.download', [$version, $lang]) }}"><span class="fname">{{ $docFile->original_name ?: basename($docFile->doc_path) }}</span></a>
             @endif
           </div>
         </div>
