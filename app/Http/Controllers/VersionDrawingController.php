@@ -9,6 +9,7 @@ use App\Services\CosFileService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -65,27 +66,45 @@ class VersionDrawingController extends Controller
     {
         $this->authorize('delete', $drawing);
 
-        if ($drawing->isDwg() && $drawing->language === 'zh') {
-            $hasOtherDwg = VersionDrawing::where('version_id', $drawing->version_id)
-                ->where('language', 'zh')
-                ->where('kind', VersionDrawing::KIND_DWG)
-                ->where('id', '!=', $drawing->id)
-                ->exists();
-
-            if (! $hasOtherDwg) {
-                return back()->withErrors(['drawing' => __('中文至少需要保留一份 DWG 图纸，不能全部删除')]);
-            }
-        }
-
         $version = $drawing->version;
         $subcategory = $version->subcategory;
         $label = self::LABELS[$drawing->language];
         $kindLabel = $drawing->isDwg() ? 'DWG' : 'PDF';
         $filename = $drawing->original_name ?: basename($drawing->file_path);
 
+        $blocked = false;
+
+        DB::transaction(function () use ($drawing, &$blocked) {
+            if ($drawing->isDwg() && $drawing->language === 'zh') {
+                // lockForUpdate 锁住这个版本下所有中文 DWG 行，跟并发的另一个删除请求
+                // 串行化：如果不加锁，两个几乎同时发起的删除请求可能都读到"除了我还有
+                // 另一份"，一起通过检查、一起删完，导致中文 DWG 变成 0 份，违反这个
+                // 校验存在的意义。锁 + get()->count()（而不是 count() 聚合查询直接加
+                // FOR UPDATE，部分数据库不允许对聚合结果加行锁）确保第二个请求会等第
+                // 一个真正提交之后才重新读到最新数量。
+                $remainingZhDwgCount = VersionDrawing::where('version_id', $drawing->version_id)
+                    ->where('language', 'zh')
+                    ->where('kind', VersionDrawing::KIND_DWG)
+                    ->lockForUpdate()
+                    ->get()
+                    ->count();
+
+                if ($remainingZhDwgCount <= 1) {
+                    $blocked = true;
+
+                    return;
+                }
+            }
+
+            $drawing->delete();
+        });
+
+        if ($blocked) {
+            return back()->withErrors(['drawing' => __('中文至少需要保留一份 DWG 图纸，不能全部删除')]);
+        }
+
         $this->files->delete($drawing->file_path);
         $this->files->delete($drawing->dxf_path);
-        $drawing->delete();
 
         AuditLog::record(Auth::id(), 'delete', 'version_drawing', $version->id, "删除「{$subcategory->name} · {$version->version_no}」{$label}的{$kindLabel}文件「{$filename}」");
 
