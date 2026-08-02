@@ -32,9 +32,9 @@
             <div class="sub-list" x-show="open">
               @foreach($specialty->subcategories as $sub)
                 <a href="{{ route('subcategory.show', [$project, $sub]) }}" class="sub-row {{ (isset($subcategory) && $subcategory->id === $sub->id) ? 'selected' : '' }}">
-                  <svg class="tree-icon sub-icon" width="11" height="11" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M4 1.5H9.5L12.5 4.5V14.5H4V1.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                    <path d="M9.5 1.5V4.5H12.5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                  <svg class="tree-icon sub-icon" width="11" height="11" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M4 1.5H9.5L12.5 4.5V14.5H4V1.5Z" fill="currentColor"/>
+                    <path d="M9.5 1.5V4.5H12.5L9.5 1.5Z" fill="#000" fill-opacity=".28"/>
                   </svg>
                   <span class="sub-name">{{ $sub->name }}</span>
                   <span class="badge-count">{{ $sub->versions_count }}</span>
