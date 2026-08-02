@@ -173,5 +173,5 @@ GuardsAgainstForceDelete` 并用 `insteadof` 显式让 `GuardsAgainstForceDelete
       `.env`，本来就是 `false`，无需改回）
 - [x] git status 确认没有意外改动（改动范围正好是 Task #39-44 涉及的文件 + 新增的
       `debug_memory.md`/测试文件，没有多余改动）
-- [ ] 提交 + 推送
-- [ ] 给用户的部署步骤说明
+- [x] 提交 + 推送（4 个 commit，`8f27734..2d05fc4`，已推送到 `origin/main`）
+- [x] 给用户的部署步骤说明（本次没有新迁移，`sudo git pull` 后只需重建缓存）
