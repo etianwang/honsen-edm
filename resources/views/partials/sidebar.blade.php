@@ -1,9 +1,22 @@
+@php
+  $activeTeamId = null;
+  $activeSpecialtyId = null;
+  if (isset($subcategory)) {
+      $activeSpecialtyId = $subcategory->specialty_id;
+      $activeTeamId = $subcategory->specialty->team_id;
+  } elseif (isset($specialty)) {
+      $activeSpecialtyId = $specialty->id;
+      $activeTeamId = $specialty->team_id;
+  } elseif (isset($team) && $team instanceof \App\Models\Team) {
+      $activeTeamId = $team->id;
+  }
+@endphp
 <div class="sidebar-backdrop" x-show="sidebarOpen" x-cloak @click="sidebarOpen=false"></div>
 <div class="sidebar" :class="{open: sidebarOpen}">
   @foreach($tree as $team)
-    <div class="team-block" x-data="{open:true}">
+    <div class="team-block" x-data="honsenTreeState('team-{{ $team->id }}', {{ $activeTeamId === $team->id ? 'true' : 'false' }})">
       <div class="team-header" :class="{open:open}">
-        <button type="button" class="tree-toggle" @click="open=!open" aria-label="{{ __('展开或收起') }}">
+        <button type="button" class="tree-toggle" @click="toggle()" aria-label="{{ __('展开或收起') }}">
           <span class="tree-toggle-icon" :class="{open:open}">&#9656;</span>
         </button>
         <svg class="tree-icon team-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -14,9 +27,9 @@
       </div>
       <div class="spec-list" x-show="open">
         @foreach($team->specialties as $specialty)
-          <div x-data="{open:true}">
+          <div x-data="honsenTreeState('spec-{{ $specialty->id }}', {{ $activeSpecialtyId === $specialty->id ? 'true' : 'false' }})">
             <div class="spec-row">
-              <button type="button" class="tree-toggle" @click="open=!open" aria-label="{{ __('展开或收起') }}">
+              <button type="button" class="tree-toggle" @click="toggle()" aria-label="{{ __('展开或收起') }}">
                 <span class="tree-toggle-icon" :class="{open:open}">&#9656;</span>
               </button>
               <svg class="tree-icon spec-icon" width="11" height="11" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

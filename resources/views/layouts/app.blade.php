@@ -389,6 +389,19 @@ td.ops{white-space:nowrap;}
 </div>
 
 <script>
+function honsenTreeState(key, forceOpen) {
+  const storageKey = 'honsen-tree-' + key;
+  let stored = false;
+  try { stored = localStorage.getItem(storageKey) === '1'; } catch (e) {}
+  return {
+    open: forceOpen || stored,
+    toggle() {
+      this.open = !this.open;
+      try { localStorage.setItem(storageKey, this.open ? '1' : '0'); } catch (e) {}
+    },
+  };
+}
+
 const HONSEN_UPLOAD_LABELS = {
   uploading: @json(__('上传中')),
   processing: @json(__('处理中…')),
