@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GuardsAgainstForceDelete;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['project_id', 'specialty_id', 'name', 'code', 'created_by'])]
 class Subcategory extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, GuardsAgainstForceDelete {
+        GuardsAgainstForceDelete::forceDelete insteadof SoftDeletes;
+    }
 
     public function project(): BelongsTo
     {

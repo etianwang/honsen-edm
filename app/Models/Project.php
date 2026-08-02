@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GuardsAgainstForceDelete;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['country_id', 'name'])]
 class Project extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, GuardsAgainstForceDelete {
+        GuardsAgainstForceDelete::forceDelete insteadof SoftDeletes;
+    }
 
     public function country(): BelongsTo
     {
