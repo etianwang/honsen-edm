@@ -92,11 +92,14 @@ class VersionDrawingController extends Controller
         return back()->with('toast', __('已删除 :filename', ['filename' => $filename]));
     }
 
-    public function download(VersionDrawing $drawing): StreamedResponse|RedirectResponse
+    public function download(VersionDrawing $drawing): StreamedResponse
     {
         $this->authorize('view', $drawing->version);
 
-        return redirect()->away($this->files->signedDownloadUrl($drawing->file_path));
+        return $this->files->streamDownload(
+            $drawing->file_path,
+            $drawing->original_name ?: basename($drawing->file_path)
+        );
     }
 
     /**

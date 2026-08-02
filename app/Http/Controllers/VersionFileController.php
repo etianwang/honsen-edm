@@ -75,13 +75,16 @@ class VersionFileController extends Controller
         return back()->with('toast', __('已移除:label说明文件', ['label' => __($label)]));
     }
 
-    public function download(Version $version, string $language): StreamedResponse|RedirectResponse
+    public function download(Version $version, string $language): StreamedResponse
     {
         $this->authorize('view', $version);
 
         $versionFile = $version->fileFor($language);
         abort_if(! $versionFile || ! $versionFile->doc_path, 404);
 
-        return redirect()->away($this->files->signedDownloadUrl($versionFile->doc_path));
+        return $this->files->streamDownload(
+            $versionFile->doc_path,
+            $versionFile->original_name ?: basename($versionFile->doc_path)
+        );
     }
 }
