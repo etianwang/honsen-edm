@@ -50,10 +50,9 @@
             <div class="spacer"></div>
             <div class="ops-row">
               @if($user->canManageContent())
-                <form method="POST" action="{{ route('version.destroy', $latest) }}" onsubmit="return confirm('{{ __('确定删除该版本记录（含所有语言文件）？此操作不可撤销。') }}')">
-                  @csrf @method('DELETE')
-                  <button type="submit" class="icon-btn danger" title="{{ __('删除') }}">✕</button>
-                </form>
+                <form method="POST" action="{{ route('version.destroy', $latest) }}" id="del-version-{{ $latest->id }}">@csrf @method('DELETE')</form>
+                <button type="button" class="icon-btn danger" title="{{ __('删除') }}"
+                  @click="$dispatch('confirm-action', {formId: 'del-version-{{ $latest->id }}', message: '{{ __('确定删除该版本记录（含所有语言文件）？此操作不可撤销。') }}'})">✕</button>
               @endif
             </div>
           </div>
@@ -121,10 +120,9 @@
                         <a class="icon-btn" title="{{ __('下载中文全部文件（ZIP）') }}" href="{{ route('version.language-zip', [$v, 'zh']) }}">↓</a>
                       @endif
                       @if($user->canManageContent())
-                        <form method="POST" action="{{ route('version.destroy', $v) }}" onsubmit="return confirm('{{ __('确定删除该版本记录（含所有语言文件）？此操作不可撤销。') }}')">
-                          @csrf @method('DELETE')
-                          <button type="submit" class="icon-btn danger" title="{{ __('删除') }}">✕</button>
-                        </form>
+                        <form method="POST" action="{{ route('version.destroy', $v) }}" id="del-version-{{ $v->id }}">@csrf @method('DELETE')</form>
+                        <button type="button" class="icon-btn danger" title="{{ __('删除') }}"
+                          @click="$dispatch('confirm-action', {formId: 'del-version-{{ $v->id }}', message: '{{ __('确定删除该版本记录（含所有语言文件）？此操作不可撤销。') }}'})">✕</button>
                       @endif
                     </div>
                   </td>
@@ -154,6 +152,8 @@
           <div class="field"><label>{{ __('发布日期') }}</label><input type="date" name="publish_date" value="{{ now()->format('Y-m-d') }}" required></div>
         </div>
         <div class="field"><label>{{ __('变更说明（中文）') }}</label><textarea name="description" placeholder="{{ __('简要描述本次变更内容...') }}" required></textarea></div>
+
+        <p class="hint" style="margin-top:0;">{{ __('文件大小上限：DWG/DXF 单份 :dwg，PDF 单份 :pdf，说明文件单份 :doc（doc/docx/xls/xlsx/pdf/txt/dwg 任一格式）。', ['dwg' => round(config('uploads.dwg_max_kb') / 1024).'MB', 'pdf' => round(config('uploads.pdf_max_kb') / 1024).'MB', 'doc' => round(config('uploads.doc_max_kb') / 1024).'MB']) }}</p>
 
         <div class="lang-section zh">
           <div class="lang-section-head">{{ __('中文（DWG 必填 · 内部使用）') }}</div>

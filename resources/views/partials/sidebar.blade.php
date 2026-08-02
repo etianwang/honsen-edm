@@ -1,4 +1,5 @@
-<div class="sidebar" x-data="{}">
+<div class="sidebar-backdrop" x-show="sidebarOpen" x-cloak @click="sidebarOpen=false"></div>
+<div class="sidebar" :class="{open: sidebarOpen}">
   @foreach($tree as $team)
     <div class="team-block" x-data="{open:true}">
       <div class="team-header" :class="{open:open}">

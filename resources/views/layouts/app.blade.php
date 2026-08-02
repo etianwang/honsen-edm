@@ -43,6 +43,10 @@ a{color:inherit;}
 .topbar{height:56px;background:var(--navy);color:var(--navy-text);
   display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--navy-line);}
 .topbar-left{display:flex;align-items:center;gap:16px;min-width:0;}
+.menu-toggle{display:none;flex:none;width:34px;height:34px;border:none;background:none;padding:0;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+.menu-toggle span{display:block;width:18px;height:2px;background:var(--navy-text);border-radius:1px;}
+.sidebar-backdrop{display:none;}
+[disabled],button:disabled,.btn:disabled{opacity:.55;cursor:not-allowed;}
 .brand{display:flex;align-items:center;gap:10px;flex:none;text-decoration:none;color:inherit;}
 .brand-mark{width:30px;height:30px;flex:none;}
 .brand-text .name{font-family:var(--font-display);font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;}
@@ -102,13 +106,13 @@ a{color:inherit;}
 .spec-row:hover{background:rgba(0,0,0,.22);}
 .spec-row .s-name{font-size:16.5px;font-weight:600;color:#F8F2DE;text-shadow:0 1px 3px rgba(0,0,0,.55);text-decoration:none;flex:1;}
 .spec-row .s-count{font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:#DDD1AC;text-shadow:0 1px 2px rgba(0,0,0,.5);}
-.spec-add{flex:none;width:18px;height:18px;border:1px solid rgba(255,244,222,.3);border-radius:5px;background:rgba(0,0,0,.25);color:#D8CFB8;display:flex;align-items:center;justify-content:center;}
+.spec-add{flex:none;width:24px;height:24px;border:1px solid rgba(255,244,222,.3);border-radius:5px;background:rgba(0,0,0,.25);color:#D8CFB8;display:flex;align-items:center;justify-content:center;}
 .spec-add:hover{border-color:var(--accent-bg);color:var(--accent-bg);}
-.tree-toggle{flex:none;width:22px;height:22px;border:none;background:none;color:#F8F2DE;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
-.tree-toggle-icon{display:inline-block;font-size:18px;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.7);transition:transform .12s ease;}
+.tree-toggle{flex:none;width:26px;height:26px;border:none;background:none;color:#F8F2DE;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
+.tree-toggle-icon{display:inline-block;font-size:20px;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.7);transition:transform .12s ease;}
 .tree-toggle-icon.open{transform:rotate(90deg);}
 .sub-list{margin-left:19px;border-left:1px solid rgba(255,244,222,.1);}
-.sub-row{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 36px;cursor:pointer;border-left:3px solid transparent;font-size:16.5px;font-weight:600;color:#F3EBD3;text-shadow:0 1px 2px rgba(0,0,0,.5);text-decoration:none;}
+.sub-row{display:flex;align-items:center;gap:8px;padding:8px 14px 8px 40px;cursor:pointer;border-left:3px solid transparent;font-size:16.5px;font-weight:600;color:#F3EBD3;text-shadow:0 1px 2px rgba(0,0,0,.5);text-decoration:none;min-height:32px;box-sizing:border-box;}
 .sub-row:hover{background:rgba(0,0,0,.22);}
 .sub-row.selected{background:rgba(156,122,61,.4);color:#FFFAEC;text-shadow:0 1px 2px rgba(0,0,0,.45);border-left-color:var(--accent-bg);font-weight:700;box-shadow:inset 0 1px rgba(255,255,255,.1);}
 .sub-row.selected .sub-icon{color:#FFFAEC;}
@@ -166,7 +170,7 @@ h2.section-title{font-family:var(--font-display);font-size:15px;font-weight:600;
 .btn-ghost{border-color:transparent;background:transparent;}
 .btn-ghost:hover{background:var(--paper);}
 .btn-sm{padding:6px 10px;font-size:12px;}
-.icon-btn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);}
+.icon-btn{width:34px;height:34px;border-radius:7px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);}
 .icon-btn:hover{border-color:var(--ink-soft);color:var(--ink);}
 .icon-btn.danger:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-bg);}
 
@@ -268,19 +272,26 @@ td.ops{white-space:nowrap;}
 .add-inline-btn:hover{border-color:var(--accent);color:var(--accent-dark);}
 
 @media (max-width:880px){
-  .sidebar{position:fixed;left:-280px;top:56px;bottom:0;z-index:70;transition:left .2s;box-shadow:var(--shadow);width:272px;}
+  .menu-toggle{display:flex;}
+  .sidebar{position:fixed;left:-280px;top:56px;bottom:0;z-index:170;transition:left .2s;box-shadow:var(--shadow);width:272px;min-height:0;}
   .sidebar.open{left:0;}
+  .sidebar-backdrop{display:block;position:fixed;left:0;top:56px;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:160;}
   .main{padding:20px 16px 50px;}
 }
 </style>
 @stack('styles')
 </head>
-<body>
+<body x-data="{sidebarOpen:false, confirmOpen:false, confirmMessage:'', confirmFormId:null}" @confirm-action.window="confirmMessage=$event.detail.message; confirmFormId=$event.detail.formId; confirmOpen=true">
 
 <div class="header-stack">
 
 <div class="topbar">
   <div class="topbar-left">
+    @isset($tree)
+      <button type="button" class="menu-toggle" @click="sidebarOpen=!sidebarOpen" aria-label="{{ __('打开导航菜单') }}">
+        <span></span><span></span><span></span>
+      </button>
+    @endisset
     <a href="{{ route('home') }}" class="brand">
       <svg class="brand-mark" viewBox="0 0 32 32">
         <rect width="32" height="32" rx="7" fill="#3A2A18"/>
@@ -360,10 +371,22 @@ td.ops{white-space:nowrap;}
 @yield('content')
 
 @if(session('toast'))
-<div class="toast" x-data="{show:true}" x-show="show" x-init="setTimeout(() => show=false, 2600)">{{ session('toast') }}</div>
+@php($toastMsg = session('toast'))
+<div class="toast" x-data="{show:true}" x-show="show" x-init="setTimeout(() => show=false, Math.max(2600, {{ mb_strlen($toastMsg) }} * 90))">{{ $toastMsg }}</div>
 @endif
 
 <div id="upload-queue" class="upload-queue"></div>
+
+<div class="overlay" style="z-index:300;" x-show="confirmOpen" x-cloak>
+  <div class="modal" style="max-width:380px;" @click.outside="confirmOpen=false">
+    <div class="modal-head"><h3>{{ __('确认操作') }}</h3><button type="button" class="modal-close" @click="confirmOpen=false">&times;</button></div>
+    <div class="modal-body"><p style="margin:0;font-size:13.5px;color:var(--ink-soft);" x-text="confirmMessage"></p></div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" @click="confirmOpen=false">{{ __('取消') }}</button>
+      <button type="button" class="btn" style="background:var(--danger);border-color:var(--danger);color:#fff;" @click="document.getElementById(confirmFormId).submit(); confirmOpen=false">{{ __('确认') }}</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const HONSEN_UPLOAD_LABELS = {
@@ -464,6 +487,11 @@ document.addEventListener('submit', function (e) {
     e.preventDefault();
     honsenAsyncUpload(e.target);
   }
+});
+
+document.addEventListener('submit', function (e) {
+  const btn = e.target.querySelector('button[type=submit]');
+  if (btn && !btn.disabled) btn.disabled = true;
 });
 </script>
 @stack('scripts')

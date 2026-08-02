@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureProjectAccess;
 use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'project.access' => EnsureProjectAccess::class,
         ]);
 
-        $middleware->web(append: [SetLocale::class]);
+        $middleware->web(append: [SetLocale::class, SecurityHeaders::class]);
 
         // 生产环境部署在 Nginx（宝塔）后面，PHP-FPM 只监听本机 socket/端口，不直接对外，
         // 所以信任所有代理是安全的；如果以后加了额外的 CDN/负载均衡，把 '*' 换成具体网段
