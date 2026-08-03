@@ -235,7 +235,7 @@ td.ops{white-space:nowrap;}
 
 .toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:11px 16px;border-radius:9px;font-size:13px;box-shadow:var(--shadow);z-index:300;}
 
-.upload-queue{position:fixed;top:66px;right:18px;z-index:400;display:none;flex-direction:column;gap:8px;width:260px;}
+.upload-queue{position:fixed;top:66px;right:18px;z-index:400;display:none;flex-direction:column;gap:8px;width:280px;}
 .upload-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;box-shadow:var(--shadow);}
 .upload-item .ui-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
 .upload-item .ui-label{font-size:12.5px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -249,6 +249,17 @@ td.ops{white-space:nowrap;}
 .upload-item.ui-error .ui-bar-fill{background:var(--danger);}
 .upload-item.ui-error .ui-pct{color:var(--danger);}
 .upload-item .ui-err-msg{font-size:11.5px;color:var(--danger);margin-top:6px;line-height:1.5;}
+.upload-item .ui-files{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);max-height:160px;overflow-y:auto;}
+.upload-item .ui-file-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px;}
+.upload-item .ui-file-name{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.upload-item .ui-file-pct{font-size:10.5px;color:var(--muted);flex:none;font-variant-numeric:tabular-nums;}
+.upload-item .ui-file-bar{height:3px;border-radius:2px;background:var(--paper);overflow:hidden;}
+.upload-item .ui-file-bar-fill{height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width .15s ease;}
+.upload-item.ui-done .ui-file-bar-fill{background:var(--success);}
+.upload-item.ui-done .ui-file-pct{color:var(--success);}
+.upload-item.ui-error .ui-file-bar-fill{background:var(--danger);}
+.upload-item .ui-file.ui-file-done .ui-file-bar-fill{background:var(--success);}
+.upload-item .ui-file.ui-file-done .ui-file-pct{color:var(--success);}
 @keyframes ui-pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
 @media (prefers-reduced-motion: reduce){.upload-item.ui-processing .ui-bar-fill{animation:none;}}
 
@@ -413,6 +424,16 @@ const HONSEN_UPLOAD_LABELS = {
   networkError: @json(__('网络错误')),
 };
 
+function honsenCollectQueuedFiles(form) {
+  const files = [];
+  form.querySelectorAll('input[type=file]').forEach(function (input) {
+    for (let i = 0; i < input.files.length; i++) {
+      files.push(input.files[i]);
+    }
+  });
+  return files;
+}
+
 function honsenAsyncUpload(form) {
   const modal = form.closest('.overlay');
   if (modal) modal.style.display = 'none';
@@ -429,6 +450,39 @@ function honsenAsyncUpload(form) {
   const fill = item.querySelector('.ui-bar-fill');
   const pct = item.querySelector('.ui-pct');
 
+  // 多文件一起上传时，浏览器只给这一整个请求的总体进度；这里按每个文件的
+  // 大小估算出它在请求体里的字节区间，再把总体已发送字节数映射回"这份文件
+  // 发到哪了"，从而在队列里给每个文件单独画一条进度条（不含 multipart 头部
+  // 几十字节的开销，图纸/PDF 文件通常几百 KB 起步，这点误差看不出来）。
+  const queuedFiles = honsenCollectQueuedFiles(form);
+  let fileRows = null;
+  if (queuedFiles.length > 1) {
+    let offset = 0;
+    const offsets = queuedFiles.map(function (f) {
+      const start = offset;
+      offset += f.size;
+      return start;
+    });
+    const filesBox = document.createElement('div');
+    filesBox.className = 'ui-files';
+    fileRows = queuedFiles.map(function (f, i) {
+      const row = document.createElement('div');
+      row.className = 'ui-file';
+      row.innerHTML = '<div class="ui-file-row"><span class="ui-file-name"></span><span class="ui-file-pct">0%</span></div>'
+        + '<div class="ui-file-bar"><div class="ui-file-bar-fill"></div></div>';
+      row.querySelector('.ui-file-name').textContent = f.name;
+      filesBox.appendChild(row);
+      return {
+        el: row,
+        fill: row.querySelector('.ui-file-bar-fill'),
+        pct: row.querySelector('.ui-file-pct'),
+        start: offsets[i],
+        size: f.size,
+      };
+    });
+    item.appendChild(filesBox);
+  }
+
   const xhr = new XMLHttpRequest();
   xhr.open('POST', form.action, true);
   xhr.setRequestHeader('Accept', 'application/json');
@@ -440,6 +494,21 @@ function honsenAsyncUpload(form) {
       fill.style.width = p + '%';
       pct.textContent = p < 100 ? (p + '%') : HONSEN_UPLOAD_LABELS.processing;
       if (p >= 100) item.classList.add('ui-processing');
+
+      if (fileRows) {
+        fileRows.forEach(function (row) {
+          let filePct;
+          if (row.size <= 0) {
+            filePct = ev.loaded >= row.start ? 100 : 0;
+          } else {
+            filePct = Math.round(((ev.loaded - row.start) / row.size) * 100);
+          }
+          filePct = Math.max(0, Math.min(100, filePct));
+          row.fill.style.width = filePct + '%';
+          row.pct.textContent = filePct + '%';
+          row.el.classList.toggle('ui-file-done', filePct >= 100);
+        });
+      }
     }
   });
 
@@ -459,6 +528,13 @@ function honsenAsyncUpload(form) {
       fill.style.width = '100%';
       pct.textContent = HONSEN_UPLOAD_LABELS.done;
       item.classList.add('ui-done');
+      if (fileRows) {
+        fileRows.forEach(function (row) {
+          row.fill.style.width = '100%';
+          row.pct.textContent = HONSEN_UPLOAD_LABELS.done;
+          row.el.classList.add('ui-file-done');
+        });
+      }
       setTimeout(function () {
         window.location.href = xhr.responseURL || window.location.href;
       }, 500);
