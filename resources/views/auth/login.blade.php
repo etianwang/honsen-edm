@@ -2,6 +2,7 @@
 <html lang="{{ app()->getLocale() === 'fr' ? 'fr' : 'zh-CN' }}">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ __('登录') }} · {{ __('深圳弘盛图纸管理系统') }}</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">

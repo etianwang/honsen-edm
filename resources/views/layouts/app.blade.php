@@ -2,6 +2,7 @@
 <html lang="{{ app()->getLocale() === 'fr' ? 'fr' : 'zh-CN' }}">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', __('深圳弘盛图纸管理系统'))</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -196,7 +197,8 @@ h2.section-title{font-family:var(--font-display);font-size:15px;font-weight:600;
 .latest-foot{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;}
 .latest-actions{display:flex;gap:6px;}
 
-table.revlog{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius);}
+table.revlog{width:100%;min-width:560px;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
 table.revlog th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:var(--paper);padding:9px 14px;font-weight:500;border-bottom:1px solid var(--border);}
 table.revlog td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
 table.revlog tr:last-child td{border-bottom:none;}
@@ -290,6 +292,15 @@ td.ops{white-space:nowrap;}
   .sidebar.open{left:0;}
   .sidebar-backdrop{display:block;position:fixed;left:0;top:56px;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:160;}
   .main{padding:20px 16px 50px;}
+}
+
+@media (max-width:560px){
+  .overlay{padding:10px;}
+  .modal-body{padding:16px;}
+  .modal-head{padding:14px 16px;}
+  .modal-foot{padding:12px 16px;}
+  .field-row{flex-direction:column;gap:15px;}
+  .upload-queue{left:10px;right:10px;width:auto;}
 }
 </style>
 @stack('styles')

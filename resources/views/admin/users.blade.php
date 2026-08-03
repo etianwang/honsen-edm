@@ -19,6 +19,7 @@
     @if(session('toast'))<div class="admin-note" style="background:var(--success-bg);color:var(--success);">{{ session('toast') }}</div>@endif
     @if($errors->any())<div class="admin-note" style="background:var(--danger-bg);color:var(--danger);">{{ $errors->first() }}</div>@endif
 
+    <div class="table-scroll">
     <table class="revlog">
       <thead><tr><th>姓名</th><th>登录标识</th><th>角色</th><th>可见项目</th><th>可见团队</th><th style="width:70px;">状态</th><th style="width:70px;">操作</th></tr></thead>
       <tbody>
@@ -41,6 +42,7 @@
         @endforeach
       </tbody>
     </table>
+    </div>
 
     @foreach($users as $u)
       @continue(! $user->canAssignRole($u->role))

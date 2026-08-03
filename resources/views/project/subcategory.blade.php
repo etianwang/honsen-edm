@@ -97,6 +97,7 @@
         @if($history->isEmpty())
           <div class="empty-state" style="padding:30px 20px;"><p style="margin:0;">{{ __('暂无更早的历史版本') }}</p></div>
         @else
+          <div class="table-scroll">
           <table class="revlog">
             <thead><tr><th style="width:56px;">{{ __('版本') }}</th><th style="width:92px;">{{ __('日期') }}</th><th style="width:110px;">{{ __('语言版本') }}</th><th>{{ __('变更说明') }}</th><th style="width:64px;">{{ __('上传人') }}</th><th style="width:80px;">{{ __('操作') }}</th></tr></thead>
             <tbody>
@@ -130,6 +131,7 @@
               @endforeach
             </tbody>
           </table>
+          </div>
         @endif
       @endif
 
