@@ -292,6 +292,24 @@ td.ops{white-space:nowrap;}
   .sidebar.open{left:0;}
   .sidebar-backdrop{display:block;position:fixed;left:0;top:56px;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:160;}
   .main{padding:20px 16px 50px;}
+
+  /* topbar-left/right 里的内容都是 flex:none（不允许自己收缩），加上 justify-content:
+     space-between 的容器本身允许被压扁——两边一撑满就会真的溢出视口，而不是自动换行
+     或者省略号截断。窄屏下把纯装饰性的品牌文字/分割线/头像昵称藏起来腾地方；
+     面包屑（scope-switch）给一个够看清的最小宽度，靠自带的 ellipsis 截断；右边
+     语言切换/后台入口/通知/个人设置/退出这些功能性按钮一个都不藏，实在挤不下就让
+     这一小条自己横向滑动，不把整个页面撑宽——跟历史版本表格用的是同一个思路。 */
+  .topbar{padding:0 12px;}
+  .topbar-left{gap:8px;}
+  .brand-text{display:none;}
+  .topbar-divider{display:none;}
+  .scope-switch{flex:1;min-width:96px;}
+  .scope-switch-btn{width:100%;max-width:100%;}
+  .topbar-right{gap:6px;flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .topbar-right::-webkit-scrollbar{display:none;}
+  .topbar-right .btn,.lang-switch,.user-chip{flex:none;white-space:nowrap;}
+  .user-avatar,.user-chip .u-name,.user-chip .u-role{display:none;}
+  .user-chip{padding-left:8px;gap:0;}
 }
 
 @media (max-width:560px){
