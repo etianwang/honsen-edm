@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 
 class VersionController extends Controller
@@ -146,9 +147,15 @@ class VersionController extends Controller
         }
     }
 
-    public function destroy(Version $version): RedirectResponse
+    public function destroy(Request $request, Version $version): RedirectResponse
     {
         $this->authorize('delete', $version);
+
+        $request->validate(['password' => ['required', 'string']]);
+
+        if (! Hash::check($request->input('password'), Auth::user()->password)) {
+            return back()->withErrors(['password' => __('密码错误，请重试')]);
+        }
 
         $subcategory = $version->subcategory;
 

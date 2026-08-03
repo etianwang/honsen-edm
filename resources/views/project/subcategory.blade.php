@@ -50,9 +50,8 @@
             <div class="spacer"></div>
             <div class="ops-row">
               @if($user->canManageContent())
-                <form method="POST" action="{{ route('version.destroy', $latest) }}" id="del-version-{{ $latest->id }}">@csrf @method('DELETE')</form>
                 <button type="button" class="icon-btn danger" title="{{ __('删除') }}"
-                  @click="$dispatch('confirm-action', {formId: 'del-version-{{ $latest->id }}', message: '{{ __('确定删除该版本记录（含所有语言文件）？此操作不可撤销。') }}'})">✕</button>
+                  onclick="document.getElementById('delete-version-{{ $latest->id }}-modal').style.display='flex'">✕</button>
               @endif
             </div>
           </div>
@@ -121,9 +120,8 @@
                         <a class="icon-btn" title="{{ __('下载中文全部文件（ZIP）') }}" href="{{ route('version.language-zip', [$v, 'zh']) }}">↓</a>
                       @endif
                       @if($user->canManageContent())
-                        <form method="POST" action="{{ route('version.destroy', $v) }}" id="del-version-{{ $v->id }}">@csrf @method('DELETE')</form>
                         <button type="button" class="icon-btn danger" title="{{ __('删除') }}"
-                          @click="$dispatch('confirm-action', {formId: 'del-version-{{ $v->id }}', message: '{{ __('确定删除该版本记录（含所有语言文件）？此操作不可撤销。') }}'})">✕</button>
+                          onclick="document.getElementById('delete-version-{{ $v->id }}-modal').style.display='flex'">✕</button>
                       @endif
                     </div>
                   </td>
@@ -133,6 +131,32 @@
           </table>
           </div>
         @endif
+      @endif
+
+      @if($user->canManageContent())
+        @foreach($versions as $v)
+          {{-- 删除版本（密码确认，跟删除细分类同一套逻辑，防止误删整份变更记录）--}}
+          <div id="delete-version-{{ $v->id }}-modal" class="overlay" style="display:none;">
+            <div class="modal">
+              <div class="modal-head"><h3>{{ __('删除') }} {{ $v->version_no }}</h3><button type="button" class="modal-close" onclick="document.getElementById('delete-version-{{ $v->id }}-modal').style.display='none'">&times;</button></div>
+              <form method="POST" action="{{ route('version.destroy', $v) }}">
+                @csrf @method('DELETE')
+                <div class="modal-body">
+                  <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 14px;">{{ __('确定删除该版本记录（含所有语言文件）？此操作不可撤销。') }}</p>
+                  <div class="field">
+                    <label>{{ __('请输入密码以确认删除') }}</label>
+                    <input type="password" name="password" placeholder="{{ __('密码') }}" autocomplete="off" required>
+                  </div>
+                  @error('password')<p class="error-text">{{ $message }}</p>@enderror
+                </div>
+                <div class="modal-foot">
+                  <button type="button" class="btn btn-ghost" onclick="document.getElementById('delete-version-{{ $v->id }}-modal').style.display='none'">{{ __('取消') }}</button>
+                  <button type="submit" class="btn" style="background:var(--danger);border-color:var(--danger);color:#fff;">{{ __('确认删除') }}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        @endforeach
       @endif
 
       @include('partials.footer')

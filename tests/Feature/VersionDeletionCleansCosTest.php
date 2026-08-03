@@ -48,7 +48,7 @@ class VersionDeletionCleansCosTest extends TestCase
             'version_id' => $version->id, 'language' => 'zh', 'doc_path' => 'a.docx',
         ]);
 
-        $this->actingAs($admin)->delete("/versions/{$version->id}")->assertRedirect();
+        $this->actingAs($admin)->delete("/versions/{$version->id}", ['password' => 'password'])->assertRedirect();
 
         $this->assertSoftDeleted($version);
         $this->assertDatabaseCount('version_drawings', 0);
@@ -58,5 +58,37 @@ class VersionDeletionCleansCosTest extends TestCase
         Storage::disk('local')->assertMissing('a.dxf');
         Storage::disk('local')->assertMissing('a.pdf');
         Storage::disk('local')->assertMissing('a.docx');
+    }
+
+    public function test_deleting_a_version_requires_the_correct_password(): void
+    {
+        $project = $this->makeProject();
+        $specialty = $this->makeSpecialty();
+        $subcategory = $this->makeSubcategory($project, $specialty);
+        $version = $this->makeVersion($subcategory);
+        $admin = $this->makeUser(User::ROLE_ADMIN, [$project], password: 'correct-password', teams: [$specialty->team]);
+
+        $response = $this->actingAs($admin)->delete("/versions/{$version->id}", [
+            'password' => 'wrong-password',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertNotSoftDeleted($version);
+    }
+
+    public function test_deleting_a_version_with_the_correct_password_soft_deletes_it(): void
+    {
+        $project = $this->makeProject();
+        $specialty = $this->makeSpecialty();
+        $subcategory = $this->makeSubcategory($project, $specialty);
+        $version = $this->makeVersion($subcategory);
+        $admin = $this->makeUser(User::ROLE_ADMIN, [$project], password: 'correct-password', teams: [$specialty->team]);
+
+        $response = $this->actingAs($admin)->delete("/versions/{$version->id}", [
+            'password' => 'correct-password',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertSoftDeleted($version);
     }
 }
