@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function () {
 
             Route::post('/subcategories/{subcategory}/versions', [VersionController::class, 'store'])
                 ->name('version.store');
+            Route::get('/subcategories/{subcategory}/versions/check', [VersionController::class, 'checkExists'])
+                ->name('version.check-exists');
             Route::delete('/versions/{version}', [VersionController::class, 'destroy'])
                 ->name('version.destroy');
 

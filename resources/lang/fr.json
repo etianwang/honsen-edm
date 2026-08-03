@@ -169,5 +169,9 @@
   "完成": "Terminé",
   "失败": "Échec",
   "上传失败，请重试": "Échec de l'envoi, veuillez réessayer",
-  "网络错误": "Erreur réseau"
+  "网络错误": "Erreur réseau",
+  "重试": "Réessayer",
+  "确认中…": "Vérification en cours…",
+  "看起来上一次已经上传成功了，请刷新页面确认，避免重复提交": "Il semble que l'envoi précédent ait réussi ; actualisez la page pour vérifier avant de soumettre à nouveau",
+  "刷新页面": "Actualiser la page"
 }

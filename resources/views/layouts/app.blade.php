@@ -249,6 +249,8 @@ td.ops{white-space:nowrap;}
 .upload-item.ui-error .ui-bar-fill{background:var(--danger);}
 .upload-item.ui-error .ui-pct{color:var(--danger);}
 .upload-item .ui-err-msg{font-size:11.5px;color:var(--danger);margin-top:6px;line-height:1.5;}
+.upload-item .ui-actions{display:flex;gap:8px;margin-top:8px;}
+.upload-item .ui-actions .btn{flex:1;justify-content:center;}
 .upload-item .ui-files{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);max-height:160px;overflow-y:auto;}
 .upload-item .ui-file-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px;}
 .upload-item .ui-file-name{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
@@ -422,6 +424,11 @@ const HONSEN_UPLOAD_LABELS = {
   failed: @json(__('失败')),
   failedMsg: @json(__('上传失败，请重试')),
   networkError: @json(__('网络错误')),
+  retry: @json(__('重试')),
+  dismiss: @json(__('关闭')),
+  checking: @json(__('确认中…')),
+  alreadySucceeded: @json(__('看起来上一次已经上传成功了，请刷新页面确认，避免重复提交')),
+  refreshPage: @json(__('刷新页面')),
 };
 
 function honsenCollectQueuedFiles(form) {
@@ -432,6 +439,122 @@ function honsenCollectQueuedFiles(form) {
     }
   });
   return files;
+}
+
+// "发布变更"表单提交的是 subcategories/{id}/versions，且带一个 version_no 字段——
+// 这是这个表单唯一天然带的"幂等键"（同一个细分类下 version_no 理论上代表同一次
+// 发布）。追加 DWG/PDF/说明文件的表单没有这种天然的键，重试前没法查"是不是已经
+// 成功了"，所以下面的查重只对"发布变更"表单生效，其它表单重试就是直接重新提交。
+function honsenVersionCheckUrl(form) {
+  const m = form.action.match(/\/subcategories\/(\d+)\/versions$/);
+  if (!m) return null;
+  const versionNoEl = form.querySelector('[name="version_no"]');
+  if (!versionNoEl || !versionNoEl.value) return null;
+  return form.action.replace(/\/subcategories\/(\d+)\/versions$/, '/subcategories/$1/versions/check')
+    + '?version_no=' + encodeURIComponent(versionNoEl.value);
+}
+
+function honsenResetItemForRetry(item, fill, pct, fileRows) {
+  item.classList.remove('ui-error', 'ui-done', 'ui-processing');
+  const err = item.querySelector('.ui-err-msg');
+  if (err) err.remove();
+  const actions = item.querySelector('.ui-actions');
+  if (actions) actions.remove();
+  fill.style.width = '0%';
+  pct.textContent = '0%';
+  if (fileRows) {
+    fileRows.forEach(function (row) {
+      row.fill.style.width = '0%';
+      row.pct.textContent = '0%';
+      row.el.classList.remove('ui-file-done');
+    });
+  }
+}
+
+// 结果已经确认存在（说明上一次其实是成功的，只是响应没送达浏览器），不能再重试，
+// 只能提示用户刷新页面去看结果，避免凭空多出一条重复记录
+function honsenShowAlreadySucceeded(item, pct, oldActions) {
+  item.classList.remove('ui-error');
+  item.classList.add('ui-done');
+  pct.textContent = HONSEN_UPLOAD_LABELS.done;
+
+  const err = item.querySelector('.ui-err-msg');
+  if (err) err.remove();
+  const msg = document.createElement('div');
+  msg.className = 'ui-err-msg';
+  msg.style.color = 'var(--success)';
+  msg.textContent = HONSEN_UPLOAD_LABELS.alreadySucceeded;
+  item.appendChild(msg);
+
+  oldActions.remove();
+  const actions = document.createElement('div');
+  actions.className = 'ui-actions';
+  const refreshBtn = document.createElement('button');
+  refreshBtn.type = 'button';
+  refreshBtn.className = 'btn btn-sm btn-ghost';
+  refreshBtn.textContent = HONSEN_UPLOAD_LABELS.refreshPage;
+  refreshBtn.addEventListener('click', function () { window.location.reload(); });
+  actions.appendChild(refreshBtn);
+  item.appendChild(actions);
+}
+
+// ambiguous=true 表示这次失败没法证明服务器真的什么都没保存（网络中断/超时/5xx 都
+// 可能是"其实处理完了，响应没传回来"），重试前先查一次；ambiguous=false（比如表单
+// 校验的 422）说明请求在真正写库之前就被拒绝了，直接重试即可，不用多此一举查一次
+function honsenShowFailureActions(form, item, fill, pct, fileRows, ambiguous) {
+  const actions = document.createElement('div');
+  actions.className = 'ui-actions';
+
+  const retryBtn = document.createElement('button');
+  retryBtn.type = 'button';
+  retryBtn.className = 'btn btn-sm btn-ghost';
+  retryBtn.textContent = HONSEN_UPLOAD_LABELS.retry;
+
+  const dismissBtn = document.createElement('button');
+  dismissBtn.type = 'button';
+  dismissBtn.className = 'btn btn-sm btn-ghost';
+  dismissBtn.textContent = HONSEN_UPLOAD_LABELS.dismiss;
+  dismissBtn.addEventListener('click', function () {
+    item.remove();
+    const queue = document.getElementById('upload-queue');
+    if (queue && !queue.children.length) queue.style.display = 'none';
+  });
+
+  retryBtn.addEventListener('click', function () {
+    retryBtn.disabled = true;
+    dismissBtn.disabled = true;
+
+    const checkUrl = ambiguous ? honsenVersionCheckUrl(form) : null;
+    if (!checkUrl) {
+      actions.remove();
+      honsenResetItemForRetry(item, fill, pct, fileRows);
+      honsenSendUpload(form, item, fill, pct, fileRows);
+      return;
+    }
+
+    pct.textContent = HONSEN_UPLOAD_LABELS.checking;
+    fetch(checkUrl, {headers: {Accept: 'application/json'}})
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function (data) {
+        if (data && data.exists) {
+          honsenShowAlreadySucceeded(item, pct, actions);
+        } else {
+          actions.remove();
+          honsenResetItemForRetry(item, fill, pct, fileRows);
+          honsenSendUpload(form, item, fill, pct, fileRows);
+        }
+      })
+      .catch(function () {
+        // 查重请求本身也失败了（比如还是没网），不能因为查不到状态就把用户卡在这里，退回直接重试
+        actions.remove();
+        honsenResetItemForRetry(item, fill, pct, fileRows);
+        honsenSendUpload(form, item, fill, pct, fileRows);
+      });
+  });
+
+  actions.appendChild(retryBtn);
+  actions.appendChild(dismissBtn);
+  item.appendChild(actions);
 }
 
 function honsenAsyncUpload(form) {
@@ -483,6 +606,12 @@ function honsenAsyncUpload(form) {
     item.appendChild(filesBox);
   }
 
+  honsenSendUpload(form, item, fill, pct, fileRows);
+}
+
+function honsenSendUpload(form, item, fill, pct, fileRows) {
+  const queue = document.getElementById('upload-queue');
+
   const xhr = new XMLHttpRequest();
   xhr.open('POST', form.action, true);
   xhr.setRequestHeader('Accept', 'application/json');
@@ -512,6 +641,8 @@ function honsenAsyncUpload(form) {
     }
   });
 
+  // 超时/网络中断时客户端根本不知道服务器有没有处理完，属于"结果不确定"，
+  // 重试前要先查一次（见 honsenShowFailureActions 的 ambiguous 参数）
   xhr.ontimeout = function () {
     item.classList.remove('ui-processing');
     item.classList.add('ui-error');
@@ -520,6 +651,7 @@ function honsenAsyncUpload(form) {
     err.className = 'ui-err-msg';
     err.textContent = HONSEN_UPLOAD_LABELS.timeoutMsg;
     item.appendChild(err);
+    honsenShowFailureActions(form, item, fill, pct, fileRows, true);
   };
 
   xhr.onload = function () {
@@ -551,10 +683,12 @@ function honsenAsyncUpload(form) {
       err.className = 'ui-err-msg';
       err.textContent = msg;
       item.appendChild(err);
-      setTimeout(function () {
-        item.remove();
-        if (!queue.children.length) queue.style.display = 'none';
-      }, 6000);
+      // 表单校验失败（4xx）说明请求在真正写库之前就被拒绝了，是确定性的失败；
+      // 其它状态码（5xx，包括发布流程里"数据库已经提交、但发通知/写审计日志这类
+      // 事务外的收尾步骤才出错"这种情况）没法排除"其实已经保存成功"的可能，按
+      // 不确定处理，重试前要先查一次
+      const ambiguous = !(xhr.status >= 400 && xhr.status < 500);
+      honsenShowFailureActions(form, item, fill, pct, fileRows, ambiguous);
     }
   };
 
@@ -562,10 +696,7 @@ function honsenAsyncUpload(form) {
     item.classList.remove('ui-processing');
     item.classList.add('ui-error');
     pct.textContent = HONSEN_UPLOAD_LABELS.networkError;
-    setTimeout(function () {
-      item.remove();
-      if (!queue.children.length) queue.style.display = 'none';
-    }, 6000);
+    honsenShowFailureActions(form, item, fill, pct, fileRows, true);
   };
 
   xhr.send(new FormData(form));

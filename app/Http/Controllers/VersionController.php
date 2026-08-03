@@ -10,6 +10,7 @@ use App\Models\VersionDrawing;
 use App\Models\VersionFile;
 use App\Notifications\NewVersionPublished;
 use App\Services\CosFileService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -89,6 +90,25 @@ class VersionController extends Controller
         return redirect()
             ->route('subcategory.show', [$subcategory->project_id, $subcategory])
             ->with('toast', __('变更已发布'));
+    }
+
+    /**
+     * "发布变更"上传失败后（尤其是网络中断/超时这类客户端根本不知道服务器有没有
+     * 真正处理完的情况），前端在用户点"重试"之前先调这个接口确认一下：这个
+     * version_no 是不是已经真的发布成功了。避免用户对着一个其实已经成功、只是
+     * 响应没送达浏览器的请求盲目重试，凭空多出一条重复的版本记录。
+     */
+    public function checkExists(Request $request, Subcategory $subcategory): JsonResponse
+    {
+        $this->authorize('create', [Version::class, $subcategory]);
+
+        $versionNo = (string) $request->query('version_no', '');
+
+        $exists = $versionNo !== '' && Version::where('subcategory_id', $subcategory->id)
+            ->where('version_no', $versionNo)
+            ->exists();
+
+        return response()->json(['exists' => $exists]);
     }
 
     private function storeDrawing(\Illuminate\Http\UploadedFile $file, string $dir, string $lang, string $kind, int $versionId): VersionDrawing
