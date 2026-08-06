@@ -275,3 +275,7 @@ php artisan view:cache
 ```
 
 这几步也可以写成一个小脚本，或者用宝塔的"计划任务"配合 webhook 触发，具体要不要自动化看团队规模，内部工具量级手动跑一遍完全够用。
+
+## License
+
+[MIT](LICENSE)
